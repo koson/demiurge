@@ -19,7 +19,13 @@ See the License for the specific language governing permissions and
 #include <soc/spi_struct.h>
 #include <driver/spi_common.h>
 #include <driver/gpio.h>
+
+#ifdef CONFIG_IDF_CMAKE
 #include <driver/spi_common_internal.h>
+#else
+#include <driver/spi_common.h>
+#endif
+
 #include "aaa_spi.h"
 
 static const uint8_t InvalidIndex = (uint8_t) -1;
