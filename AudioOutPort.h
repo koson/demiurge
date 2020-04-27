@@ -21,7 +21,6 @@ See the License for the specific language governing permissions and
 
 typedef struct {
    int position;
-   signal_t *me;
    signal_t *input;
    bool registered;
 } audio_out_port_t;
@@ -37,9 +36,8 @@ public:
 
    void configure(Signal *input);
 
-   audio_out_port_t _data{};
 private:
-   Signal *_input{};
+   audio_out_port_t _data{};
 };
 
 

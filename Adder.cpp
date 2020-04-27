@@ -21,10 +21,10 @@ See the License for the specific language governing permissions and
 
 
 Adder::Adder() {
-   ESP_LOGD("Adder", "Constructor: %llx ", (uint64_t) this);
+   ESP_LOGI("Adder", "Constructor: %llx ", (uint64_t) this);
    _signal.data = &_data;
    _signal.read_fn = offset_read;
-   ((offset_t *) &_signal)->offset = 0;
+   _data.offset = 0;
    _data.offset_control = nullptr;
 }
 

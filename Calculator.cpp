@@ -21,7 +21,7 @@ See the License for the specific language governing permissions and
 
 
 Calculator::Calculator() {
-   ESP_LOGD("Calculator", "Constructor: %llx ", (uint64_t) this);
+   ESP_LOGI("Calculator", "Constructor: %llx ", (uint64_t) this);
    _signal.data = &_data;
    _signal.read_fn = calculator_read;
 }

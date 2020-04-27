@@ -21,7 +21,6 @@ See the License for the specific language governing permissions and
 #include "Signal.h"
 
 typedef struct {
-   signal_t *me;
    signal_t *input;
    signal_t *control;
 } volume_t;
@@ -39,8 +38,6 @@ public:
 
 private:
    volume_t _data{};
-   Signal *_input{};
-   Signal *_control{};
 };
 
 

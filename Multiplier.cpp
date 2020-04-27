@@ -20,7 +20,7 @@ See the License for the specific language governing permissions and
 #include "Signal.h"
 
 Multiplier::Multiplier() {
-   ESP_LOGD("Multiplier", "Constructor: %llx ", (uint64_t) this);
+   ESP_LOGI("Multiplier", "Constructor: %llx ", (uint64_t) this);
    _signal.data = &_data;
    _signal.read_fn = scale_read;
    ((scale_t *) &_signal)->scale = 1.0;

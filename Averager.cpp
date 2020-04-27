@@ -21,7 +21,7 @@ See the License for the specific language governing permissions and
 
 
 Averager::Averager() {
-   ESP_LOGD("Averager", "Constructor: %llx ", (uint64_t) this);
+   ESP_LOGI("Averager", "Constructor: %llx ", (uint64_t) this);
    _signal.data = &_data;
    _signal.read_fn = average_read;
    ((average_t *) &_signal)->update = 0.1;

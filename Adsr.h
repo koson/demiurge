@@ -61,12 +61,6 @@ public:
 
 private:
    adsr_t _data{};
-   Signal *_gate;
-   Signal *_trig;
-   Signal *_attack;
-   Signal *_decay;
-   Signal *_sustain;
-   Signal *_release;
 };
 
 

@@ -21,39 +21,34 @@ See the License for the specific language governing permissions and
 #include "Clipping.h"
 
 Adsr::Adsr() {
-   ESP_LOGD("Adsr", "Constructor: %llx", (uint64_t) this );
+   ESP_LOGI("Adsr", "Constructor: %llx", (uint64_t) this );
+   _signal.data = &_data;
    _signal.read_fn = adsr_read;
 }
 
 Adsr::~Adsr() = default;
 
 void Adsr::configureGate(Signal *gate) {
-   _gate = gate;
    _data.gate = &gate->_signal;
 }
 
 void Adsr::configureAttack(Signal *control) {
-   _attack = control;
    _data.attack = &control->_signal;
 }
 
 void Adsr::configureDecay(Signal *control) {
-   _decay = control;
    _data.decay = &control->_signal;
 }
 
 void Adsr::configureSustain(Signal *control) {
-   _sustain = control;
    _data.sustain = &control->_signal;
 }
 
 void Adsr::configureRelease(Signal *control) {
-   _release = control;
    _data.release = &control->_signal;
 }
 
 void Adsr::configureTrig(Signal *trig) {
-   _trig = trig;
    _data.trig = &trig->_signal;
 }
 
@@ -66,7 +61,8 @@ float IRAM_ATTR adsr_read(signal_t *handle, uint64_t time){
 
       bool trigIn = threshold_compute(&adsr->trigThreshold, adsr->trig->read_fn(adsr->trig, time));
       bool gateIn = threshold_compute(&adsr->gateThreshold, adsr->gate->read_fn(adsr->gate, time));
-
+      handle->extra1 = trigIn;
+      handle->extra2 = gateIn;
       if (!adsr->currentTrig && trigIn) {
          // RISE
          adsr->stateMachine = 1;
@@ -125,6 +121,9 @@ float IRAM_ATTR adsr_read(signal_t *handle, uint64_t time){
 
       float result = clipAudio(output);
       handle->cached = result;
+      handle->extra3 = result;
+      handle->extra4 = adsr->stateMachine;
+
       return result;
    }
    return handle->cached;

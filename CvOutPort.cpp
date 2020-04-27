@@ -20,12 +20,11 @@ See the License for the specific language governing permissions and
 #include "Demiurge.h"
 
 CvOutPort::CvOutPort(int position) {
-   ESP_LOGD("CvOutPort", "Constructor: %llx at position %d", (uint64_t) this, position );
+   ESP_LOGI("CvOutPort", "Constructor: %llx at position %d", (uint64_t) this, position );
    configASSERT(position > 0 && position <= 2)
-   _data.me = &_signal;
-   _data.position = position;
-   _signal.read_fn = cvoutport_read;
    _signal.data = &_data;
+   _signal.read_fn = cvoutport_read;
+   _data.position = position;
 }
 
 CvOutPort::~CvOutPort() {

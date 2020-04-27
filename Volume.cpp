@@ -20,7 +20,8 @@ See the License for the specific language governing permissions and
 #include "Volume.h"
 
 Volume::Volume() {
-   ESP_LOGD("Volume", "Constructor: %llx", (uint64_t) this );
+   ESP_LOGI("Volume", "Constructor: %llx", (uint64_t) this );
+   _signal.data = &_data;
    _signal.read_fn = volume_read;
 }
 
@@ -28,11 +29,8 @@ Volume::~Volume() = default;
 
 void Volume::configure(Signal *input, Signal *control) {
    configASSERT(input != nullptr && control != nullptr)
-   _input = input;
-   _control = control;
    _data.input = &input->_signal;
    _data.control = &control->_signal;
-   _signal.data = &_data;
 }
 
 float  IRAM_ATTR volume_read(signal_t *handle, uint64_t time) {

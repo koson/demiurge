@@ -22,11 +22,11 @@ See the License for the specific language governing permissions and
 
 
 Mixer::Mixer() {
-   ESP_LOGD("Mixer", "Constructor: %llx", (uint64_t) this);
+   ESP_LOGI("Mixer", "Constructor: %llx", (uint64_t) this);
    for (auto &input : _data.inputs)
       input = nullptr;
-   _signal.read_fn = mixer_read;
    _signal.data = &_data;
+   _signal.read_fn = mixer_read;
    _signal.extra1 = -1.0;
 }
 

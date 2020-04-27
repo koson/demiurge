@@ -46,7 +46,7 @@ static void IRAM_ATTR wait_timer_alarm() {
 }
 
 void IRAM_ATTR startInfiniteTask(void *parameter) {
-   ESP_LOGD("MAIN", "Starting audio algorithm in Core %d", xTaskGetAffinity(nullptr));
+   ESP_LOGD(TAG, "Starting audio algorithm in Core %d", xTaskGetAffinity(nullptr));
    auto *demiurge = static_cast<Demiurge *>(parameter);
    demiurge->initialize();
    initialize_tick_timer(demiurge->_ticks_per_second);
@@ -104,7 +104,7 @@ void Demiurge::startRuntime(int ticks_per_second) {
    esp_task_wdt_delete(idleTask);
    ESP_LOGI(TAG, "Executing in Core %d", xTaskGetAffinity(nullptr));
    xTaskCreatePinnedToCore(startInfiniteTask, "Audio", 8192, this, 7, &_taskHandle, 1);
-   vTaskDelay(10);
+   ets_delay_us(200000);
 }
 
 void Demiurge::initializeSinks() {
@@ -125,7 +125,7 @@ void Demiurge::registerSink(signal_t *processor) {
    for (int i = 0; i < DEMIURGE_MAX_SINKS; i++) {
       if (_sinks[i] == nullptr) {
          _sinks[i] = processor;
-         ESP_LOGI("MAIN", "Registering Sink: %d", i);
+         ESP_LOGI(TAG, "Registering Sink: %d", i);
          break;
       }
    }
@@ -193,8 +193,6 @@ float IRAM_ATTR Demiurge::output(int number) {
    configASSERT(number > 0 && number <= DEMIURGE_MAX_SINKS)
    return _outputs[number - 1];
 }
-
-static int count = 4;
 
 bool IRAM_ATTR Demiurge::gpio(int pin) {
    return (_gpios >> pin & 1) != 0;

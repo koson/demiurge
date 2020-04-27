@@ -30,7 +30,7 @@ public:
    MCP4822(gpio_num_t mosi_pin, gpio_num_t sclk_pin, gpio_num_t cs_pin);
    virtual ~MCP4822();
 
-   void setOutput(uint16_t output1, uint16_t output2);
+   void setOutput(int16_t output1, int16_t output2);
 
    lldesc_t *out;
 private:

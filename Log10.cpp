@@ -21,7 +21,7 @@ See the License for the specific language governing permissions and
 #include "Signal.h"
 
 Log10::Log10() {
-   ESP_LOGD("Log10", "Constructor: %llx ", (uint64_t) this);
+   ESP_LOGI("Log10", "Constructor: %llx ", (uint64_t) this);
    _signal.data = &_data;
    _signal.read_fn = log10_read;
 }

@@ -25,7 +25,7 @@ static bool sine_wave_initialized = false;
 static float sine_wave[SINEWAVE_SAMPLES];
 
 Oscillator::Oscillator(int mode) {
-   ESP_LOGD("Oscillator", "Constructor: %llx", (uint64_t) this);
+   ESP_LOGI("Oscillator", "Constructor: %llx", (uint64_t) this);
    if (!sine_wave_initialized) {
       for (int i = 0; i < SINEWAVE_SAMPLES; i++) {
          double radians = ((double) i / SINEWAVE_SAMPLES) * M_TWOPI;
@@ -33,12 +33,12 @@ Oscillator::Oscillator(int mode) {
       }
       sine_wave_initialized = true;
    }
+   _signal.data = &_data;
    _signal.read_fn = oscillator_read;
    _data.mode = mode;
    _triggerControl = nullptr;
    _amplitudeControl = nullptr;
    _frequencyControl = nullptr;
-   _signal.data = &_data;
    _data.lastTrig = 0;
    auto *osc = (oscillator_t *) _signal.data;
    osc->scale = 1.0;

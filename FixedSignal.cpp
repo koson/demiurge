@@ -19,10 +19,10 @@ See the License for the specific language governing permissions and
 #include "FixedSignal.h"
 
 FixedSignal::FixedSignal(float value) {
-   ESP_LOGD("FixedSignal", "Constructor: %llx with value %f", (uint64_t) this, value );
-   _data.value = value;
-   _signal.read_fn = fixedsignal_read;
+   ESP_LOGI("FixedSignal", "Constructor: %llx with value %f", (uint64_t) this, value );
    _signal.data = &_data;
+   _signal.read_fn = fixedsignal_read;
+   _data.value = value;
 }
 
 void FixedSignal::set_value(float value) {
