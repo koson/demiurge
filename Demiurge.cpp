@@ -27,11 +27,7 @@ See the License for the specific language governing permissions and
 static uint16_t micros_per_tick;
 
 static void IRAM_ATTR initialize_tick_timer(int ticks_per_second) {
-<<<<<<< HEAD:Demiurge.cpp
    micros_per_tick = 1000000 / ticks_per_second;
-=======
-   uint16_t micros_per_tick = 1000000 / ticks_per_second;
->>>>>>> b595f2ac077a1f9e560f73cacd57bba6de9898cc:src/Demiurge.cpp
    WRITE_PERI_REG(TIMG_T0CONFIG_REG(DEMIURGE_TIMER_GROUP),
                   (1 << TIMG_T0_DIVIDER_S) | TIMG_T0_EN | TIMG_T0_AUTORELOAD | TIMG_T0_INCREASE | TIMG_T0_ALARM_EN);
 
@@ -65,52 +61,31 @@ void IRAM_ATTR startInfiniteTask(void *parameter) {
 
 Demiurge::Demiurge() {
    ESP_LOGI(TAG, "Starting Demiurge...\n");
-<<<<<<< HEAD:Demiurge.cpp
    for (int i = 0; i < DEMIURGE_MAX_SINKS; i++)
-=======
-   for( int i=0 ; i < DEMIURGE_MAX_SINKS; i++ )
->>>>>>> b595f2ac077a1f9e560f73cacd57bba6de9898cc:src/Demiurge.cpp
       _sinks[i] = nullptr;
    _started = false;
    _gpios = 0;
    initializeSinks();
 };
 
-<<<<<<< HEAD:Demiurge.cpp
 static gpio_num_t gpio_output[] = {GPIO_NUM_21, GPIO_NUM_22, GPIO_NUM_25, GPIO_NUM_26, GPIO_NUM_33, GPIO_NUM_27};
 static uint32_t gpio_output_level[] = {1, 1, 1, 1, 0, 0};
-=======
-static gpio_num_t gpio_output[] = {GPIO_NUM_21, GPIO_NUM_22, GPIO_NUM_25, GPIO_NUM_26, GPIO_NUM_33};
-static uint32_t gpio_output_level[] = {1, 1, 1, 1, 0};
->>>>>>> b595f2ac077a1f9e560f73cacd57bba6de9898cc:src/Demiurge.cpp
 static gpio_num_t gpio_input[] = {GPIO_NUM_32, GPIO_NUM_36, GPIO_NUM_37, GPIO_NUM_38, GPIO_NUM_39};
 
 void Demiurge::initialize() {
    for (int i = 0; i < sizeof(gpio_output) / sizeof(gpio_num_t); i++) {
-<<<<<<< HEAD:Demiurge.cpp
       ESP_LOGI(TAG, "Init GPIO%u", gpio_output[i]);
-=======
-      ESP_LOGI("Demiurge", "Init GPIO%u", gpio_output[i]);
->>>>>>> b595f2ac077a1f9e560f73cacd57bba6de9898cc:src/Demiurge.cpp
       esp_err_t error = gpio_set_direction(gpio_output[i], GPIO_MODE_OUTPUT);
       configASSERT(error == ESP_OK)
       gpio_set_level(gpio_output[i], gpio_output_level[i]);
    }
 
    for (int i = 0; i < sizeof(gpio_input) / sizeof(gpio_num_t); i++) {
-<<<<<<< HEAD:Demiurge.cpp
       ESP_LOGI(TAG, "Init GPIO%u", gpio_input[i]);
       esp_err_t error = gpio_set_direction(gpio_input[i], GPIO_MODE_INPUT);
       configASSERT(error == ESP_OK)
    }
    ESP_LOGI(TAG, "Initialized GPIO done");
-=======
-      ESP_LOGI("Demiurge", "Init GPIO%u", gpio_input[i]);
-      esp_err_t error = gpio_set_direction(gpio_input[i], GPIO_MODE_INPUT);
-      configASSERT(error == ESP_OK)
-   }
-   ESP_LOGI("Demiurge", "Initialized GPIO done");
->>>>>>> b595f2ac077a1f9e560f73cacd57bba6de9898cc:src/Demiurge.cpp
 
    _dac = new MCP4822(GPIO_NUM_13, GPIO_NUM_14, GPIO_NUM_15);
    _adc = new ADC128S102(GPIO_NUM_23, GPIO_NUM_19, GPIO_NUM_18, GPIO_NUM_5);
@@ -133,11 +108,7 @@ void Demiurge::startRuntime(int ticks_per_second) {
 }
 
 void Demiurge::initializeSinks() {
-<<<<<<< HEAD:Demiurge.cpp
    ESP_LOGI(TAG, "Clearing all sinks!");
-=======
-   ESP_LOGI("MAIN", "Clearing all sinks!");
->>>>>>> b595f2ac077a1f9e560f73cacd57bba6de9898cc:src/Demiurge.cpp
    for (auto &_sink : _sinks) {
       _sink = nullptr;
    }
@@ -151,13 +122,8 @@ Demiurge::~Demiurge() {
 void Demiurge::registerSink(signal_t *processor) {
    ESP_LOGI(TAG, "Registering Sink: %llx", (uint64_t) processor);
    configASSERT(processor != nullptr)
-<<<<<<< HEAD:Demiurge.cpp
    for (int i = 0; i < DEMIURGE_MAX_SINKS; i++) {
       if (_sinks[i] == nullptr) {
-=======
-   for( int i=0; i < DEMIURGE_MAX_SINKS; i++ ){
-      if( _sinks[i] == nullptr ){
->>>>>>> b595f2ac077a1f9e560f73cacd57bba6de9898cc:src/Demiurge.cpp
          _sinks[i] = processor;
          ESP_LOGI("MAIN", "Registering Sink: %d", i);
          break;
@@ -168,17 +134,10 @@ void Demiurge::registerSink(signal_t *processor) {
 void Demiurge::unregisterSink(signal_t *processor) {
    ESP_LOGI(TAG, "Unregistering Sink: %llx", (uint64_t) processor);
    configASSERT(processor != nullptr)
-<<<<<<< HEAD:Demiurge.cpp
    for (int i = 0; i < DEMIURGE_MAX_SINKS; i++) {
       if (_sinks[i] == processor) {
          _sinks[i] = nullptr;
          ESP_LOGI(TAG, "Unregistering Sink: %d, %llx", i, (uint64_t) processor);
-=======
-   for( int i=0; i < DEMIURGE_MAX_SINKS; i++ ){
-      if( _sinks[i] == processor ){
-         _sinks[i] = nullptr;
-         ESP_LOGI("MAIN", "Unregistering Sink: %d, %llx", i, (uint64_t) processor);
->>>>>>> b595f2ac077a1f9e560f73cacd57bba6de9898cc:src/Demiurge.cpp
          break;
       }
    }

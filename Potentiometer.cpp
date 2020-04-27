@@ -31,11 +31,7 @@ Potentiometer::Potentiometer(int position) {
 Potentiometer::~Potentiometer() = default;
 
 float IRAM_ATTR potentiometer_read(signal_t *handle, uint64_t time) {
-<<<<<<< HEAD:Potentiometer.cpp
    auto *port = (potentiometer_t *) handle->data;
-=======
-   auto *port = (pushbutton_t *) handle->data;
->>>>>>> b595f2ac077a1f9e560f73cacd57bba6de9898cc:src/Potentiometer.cpp
    float result = Demiurge::runtime().input(port->position);
    return result;
 }

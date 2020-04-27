@@ -26,19 +26,9 @@ CvInPort::CvInPort(int position) {
    _data.position = position + DEMIURGE_CVINPUT_OFFSET;
    _signal.read_fn = cvinport_read;
    _signal.data = &_data;
-<<<<<<< HEAD:CvInPort.cpp
 }
 
 CvInPort::~CvInPort() = default;
-=======
-   ESP_LOGD("CvInPort", "_signal: %x", this->_signal);
-}
-
-CvInPort::~CvInPort() {
-   ESP_LOGD("CvInPort", "Destructor: %llx", (uint64_t) this);
-
-}
->>>>>>> b595f2ac077a1f9e560f73cacd57bba6de9898cc:src/CvInPort.cpp
 
 float IRAM_ATTR cvinport_read(signal_t *handle, uint64_t time) {
    auto *cv = (cv_in_port_t *) handle->data;

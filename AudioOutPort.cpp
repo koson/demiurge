@@ -52,13 +52,8 @@ float IRAM_ATTR audiooutport_read(signal_t *handle, uint64_t time) {
       signal_t *upstream = port->input;
       signal_fn fn = upstream->read_fn;
       float result = clipAudio(fn(upstream, time));
-<<<<<<< HEAD:AudioOutPort.cpp
       Demiurge::runtime().set_output(port->position, result);
       return 0.0;
-=======
-      handle->cached = result;
-      return result;
->>>>>>> b595f2ac077a1f9e560f73cacd57bba6de9898cc:src/AudioOutPort.cpp
    }
    return 0.0;
 }

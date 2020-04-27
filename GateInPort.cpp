@@ -18,10 +18,7 @@ See the License for the specific language governing permissions and
 #include <esp_log.h>
 #include <driver/gpio.h>
 #include "Clipping.h"
-<<<<<<< HEAD:GateInPort.cpp
 #include "GateInPort.h"
-=======
->>>>>>> b595f2ac077a1f9e560f73cacd57bba6de9898cc:src/GateInPort.cpp
 #include "Demiurge.h"
 
 GateInPort::GateInPort(int position) {

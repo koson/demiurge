@@ -20,11 +20,7 @@ See the License for the specific language governing permissions and
 #include "ControlPair.h"
 
 ControlPair::ControlPair(int position) {
-<<<<<<< HEAD:ControlPair.cpp
    ESP_LOGD("ControlPair", "Constructor: %llx at position %d", (uint64_t) this, position);
-=======
-   ESP_LOGD("ControlPair", "Constructor: %llx at position %d", (uint64_t) this, position );
->>>>>>> b595f2ac077a1f9e560f73cacd57bba6de9898cc:src/ControlPair.cpp
    configASSERT(position > 0 && position <= 4)
    _potentiometer = new Potentiometer(position);
    _cvIn = new CvInPort(position);

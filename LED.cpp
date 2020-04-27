@@ -19,11 +19,8 @@ See the License for the specific language governing permissions and
 #include <esp_log.h>
 #include "LED.h"
 #include "Demiurge.h"
-<<<<<<< HEAD:LED.cpp
 
 // TODO: This code should be refactored so that all the hardware specifics goes to Demiurge::runtime(), and we can later devise a "driver" system if there are more boards being made.
-=======
->>>>>>> b595f2ac077a1f9e560f73cacd57bba6de9898cc:src/LED.cpp
 
 LED::LED(int position) {
    ESP_LOGD("LED", "Constructor: %llx", (uint64_t) this);

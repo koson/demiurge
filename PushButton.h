@@ -19,11 +19,7 @@ See the License for the specific language governing permissions and
 
 #include "Signal.h"
 
-<<<<<<< HEAD:PushButton.h
 #define DEMIURGE_PUSHBUTTON_OFFSET 35
-=======
-#define DEMIURGE_PUSHBUTTON_OFFSET 36
->>>>>>> b595f2ac077a1f9e560f73cacd57bba6de9898cc:src/PushButton.h
 
 typedef struct {
    int position;
