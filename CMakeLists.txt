@@ -15,39 +15,39 @@
 #
 
 idf_component_register(
-        SRCS Adder.cpp        
-             AudioOutPort.cpp  
-             Clipping.cpp     
-             CvOutPort.cpp    
-             GateInPort.cpp   
-             LED.cpp    
-             Log.cpp         
-             OctavePerVolt.cpp  
-             Passthru.cpp       
-             Signal.cpp
-             Adsr.cpp         
-             Averager.cpp      
-             ControlPair.cpp  
-             Demiurge.cpp     
-             GateOutPort.cpp  
-             Log10.cpp  
-             Mixer.cpp       
-             Oscillator.cpp     
-             Potentiometer.cpp  
-             Threshold.cpp
-             AudioInPort.cpp  
-             Calculator.cpp    
-             CvInPort.cpp     
-             FixedSignal.cpp  
-             Inverter.cpp     
-             Log2.cpp   
-             Multiplier.cpp  
-             Pan.cpp            
-             PushButton.cpp     
-             Volume.cpp
-             adc128s102/ADC128S102.cpp  
-             mcp4822/MCP4822.cpp  
-             spi/aaa_spi.c
-        INCLUDE_DIRS "."
+    SRCS Adder.cpp
+        Adsr.cpp
+        AudioInPort.cpp
+        AudioOutPort.cpp
+        Averager.cpp
+        Calculator.cpp
+        Clipping.cpp
+        ControlPair.cpp
+        CvInPort.cpp
+        CvOutPort.cpp
+        Demiurge.cpp
+        FixedSignal.cpp
+        GateInPort.cpp
+        GateOutPort.cpp
+        Inverter.cpp
+        LED.cpp
+        Log.cpp
+        Log2.cpp
+        Log10.cpp
+        Mixer.cpp
+        Multiplier.cpp
+        OctavePerVolt.cpp
+        Oscillator.cpp
+        Pan.cpp
+        Passthru.cpp
+        Potentiometer.cpp
+        PushButton.cpp
+        Signal.cpp
+        Threshold.cpp
+        Volume.cpp
+        adc128s102/ADC128S102.cpp
+        mcp4822/MCP4822.cpp
+        spi/aaa_spi.c
+    INCLUDE_DIRS "."
 )
 
