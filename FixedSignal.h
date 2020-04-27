@@ -18,7 +18,7 @@ See the License for the specific language governing permissions and
 #define _DEMIURGE_FIXEDSIGNAL_H_
 
 
-#include "../runtime/Signal.h"
+#include "Signal.h"
 typedef struct {
    float value;
 } fixed_signal_t;
