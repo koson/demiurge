@@ -37,6 +37,9 @@ void Mixer::configure(int number, Signal *source, Signal *control) {
    auto *v = new Volume();
    v->configure(source, control);
    _data.inputs[number - 1] = &v->_signal;
+   for (int i = 0; i < DEMIURGE_MAX_MIXER_IN; i++) {
+      _data.inputs[i] = nullptr;
+   }
 }
 
 float IRAM_ATTR mixer_read(signal_t *handle, uint64_t time) {
@@ -45,8 +48,12 @@ float IRAM_ATTR mixer_read(signal_t *handle, uint64_t time) {
       handle->last_calc = time;
       float output = 0;
       int counter = 0;
-      if( handle->extra1 == -1.0 ){
-         ESP_LOGD("Mixer", "Inputs: %llx      %llx      %llx      %llx", (uint64_t) mixer->inputs[0], (uint64_t) mixer->inputs[1], (uint64_t) mixer->inputs[2], (uint64_t) mixer->inputs[3] );
+      if (handle->extra1 == -1.0) {
+         ESP_LOGD("Mixer", "Inputs: %llx      %llx      %llx      %llx",
+                  (uint64_t) mixer->inputs[0],
+                  (uint64_t) mixer->inputs[1],
+                  (uint64_t) mixer->inputs[2],
+                  (uint64_t) mixer->inputs[3]);
       }
 
       for (auto inp : mixer->inputs) {
