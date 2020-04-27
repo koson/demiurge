@@ -27,6 +27,10 @@ See the License for the specific language governing permissions and
 
 #define DEMIURGE_MAX_SINKS 6
 
+extern "C" {
+void app_main(void);
+}
+
 class Demiurge {
 
 public:
