@@ -20,10 +20,10 @@ See the License for the specific language governing permissions and
 #include <driver/spi_common.h>
 #include <driver/gpio.h>
 
-#ifdef CONFIG_IDF_CMAKE
-#include <driver/spi_common_internal.h>
-#else
+#ifdef ARDUINO_ARCH_ESP32
 #include <driver/spi_common.h>
+#else
+#include <driver/spi_common_internal.h>
 #endif
 
 #include "aaa_spi.h"
