@@ -105,6 +105,8 @@ public:
 
    int _ticks_per_second;
 
+   void print_overview(const char *tag, Signal *signal);
+
 private:
 
    Demiurge();
@@ -125,6 +127,7 @@ private:
    uint64_t timerCounter = 0;         // in microseconds, increments 50 at a time.
    MCP4822 *_dac = nullptr;
    ADC128S102 *_adc = nullptr;
+
 };
 
 

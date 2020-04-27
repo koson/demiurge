@@ -207,5 +207,31 @@ void Demiurge::set_output(int number, float value) {
    _outputs[number - 1] = value;
 }
 
+void Demiurge::print_overview(const char *tag, Signal *signal) {
+   ESP_LOGI(tag, "Input: %2.1f, %2.1f, %2.1f, %2.1f, %2.1f, %2.1f, %2.1f, %2.1f",
+            input(1),
+            input(2),
+            input(3),
+            input(4),
+            input(5),
+            input(6),
+            input(7),
+            input(8)
+   );
+   ESP_LOGI(tag, "Output: %2.1f, %2.1f, %2.1f, %2.1f, %2.1f, %2.1f",
+            output(1),
+            output(2),
+            output(3),
+            output(4),
+            output(5),
+            output(6)
+   );
+   ESP_LOGI(tag, "Extras: %2.1f, %2.1f, %2.1f, %2.1f",
+            signal->extra1(),
+            signal->extra2(),
+            signal->extra3(),
+            signal->extra4()
+   );
 
+}
 #undef TAG
