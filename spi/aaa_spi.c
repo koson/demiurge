@@ -108,7 +108,11 @@ esp_err_t aaa_spi_prepare_circular(const spi_host_device_t spiHostDevice, const 
                                    const gpio_num_t miso_gpio_num, const gpio_num_t sclk_gpio_num,
                                    const int waitCycle) {
 
+#ifdef ARDUINO_ARCH_ESP32
+   const bool spi_periph_claimed = spicommon_periph_claim(spiHostDevice);
+#else
    const bool spi_periph_claimed = spicommon_periph_claim(spiHostDevice, "demiurge");
+#endif
    if (!spi_periph_claimed) {
       return DEMIURGE_ESP_ERR_SPI_HOST_ALREADY_IN_USE;
    }
