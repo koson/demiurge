@@ -24,20 +24,6 @@ See the License for the specific language governing permissions and
 #define TAG "DEMI"
 #define DEMIURGE_TIMER_GROUP 0
 
-#ifndef NO_DEMIURGE_MAIN_APP
-extern "C" {
-void app_main(void);
-void setup(void);
-void loop(void);
-}
-
-void app_main() {
-   setup();
-   while (true)
-      loop();
-}
-#endif
-
 static uint16_t micros_per_tick;
 
 static void IRAM_ATTR initialize_tick_timer(int ticks_per_second) {
