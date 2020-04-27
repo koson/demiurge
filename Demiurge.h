@@ -20,8 +20,36 @@ See the License for the specific language governing permissions and
 #include <stdint.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
-
+#include "Adder.h"
+#include "Adsr.h"
+#include "AudioInPort.h"
+#include "AudioOutPort.h"
+#include "Averager.h"
+#include "Calculator.h"
+#include "Clipping.h"
+#include "ControlPair.h"
+#include "CvInPort.h"
+#include "CvOutPort.h"
+#include "FixedSignal.h"
+#include "GateInPort.h"
+#include "GateOutPort.h"
+#include "Inverter.h"
+#include "LED.h"
+#include "Log.h"
+#include "Log2.h"
+#include "Log10.h"
+#include "Mixer.h"
+#include "Multiplier.h"
+#include "OctavePerVolt.h"
+#include "Oscillator.h"
+#include "Pan.h"
+#include "Passthru.h"
+#include "Potentiometer.h"
+#include "PushButton.h"
 #include "Signal.h"
+#include "Threshold.h"
+#include "Volume.h"
+
 #include "adc128s102/ADC128S102.h"
 #include "mcp4822/MCP4822.h"
 
