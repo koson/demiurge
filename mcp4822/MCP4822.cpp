@@ -53,7 +53,7 @@ static void initialize(gpio_num_t pin_out) {
    WRITE_PERI_REG(MCPWM_TIMER0_CFG1_REG(0), (1 << MCPWM_TIMER0_MOD_S) | (2 << MCPWM_TIMER0_START_S));
 }
 
-MCP4822::MCP4822(gpio_num_t mosi_pin, gpio_num_t sclk_pin, gpio_num_t cs_pin) {
+MCP4822::MCP4822(gpio_num_t mosi_pin, gpio_num_t sclk_pin, gpio_num_t cs_pin, gpio_num_t ldac) {
    ESP_LOGI(TAG, "Initializing DAC SPI.");
 
    out = static_cast<lldesc_t *>(heap_caps_malloc(sizeof(lldesc_t), MALLOC_CAP_DMA));
@@ -86,10 +86,11 @@ MCP4822::MCP4822(gpio_num_t mosi_pin, gpio_num_t sclk_pin, gpio_num_t cs_pin) {
    auto s1 = (1 << MCPWM_TIMER0_MOD_S) | (2 << MCPWM_TIMER0_START_S);
    auto s3 = (158 << MCPWM_TIMER0_PHASE_S) | (0 << MCPWM_TIMER0_SYNCO_SEL_S) | (1 << MCPWM_TIMER0_SYNC_SW_S);
 
+   gpio_set_level(cs_pin, 0);
    portDISABLE_INTERRUPTS();  // No interference in timing.
    for (int i = 0; i < 2; i++) {  // Make sure SPI Flash fetches doesn't interfere
 
-      initialize(cs_pin);
+      initialize(ldac);
       spiHw->dma_out_link.start = 0;   // Stop SPI DMA transfer (1)
       spiHw->cmd.usr = 0;   // SPI: Stop SPI DMA transfer
 

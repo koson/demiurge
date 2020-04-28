@@ -68,8 +68,8 @@ Demiurge::Demiurge() {
    initializeSinks();
 };
 
-static gpio_num_t gpio_output[] = {GPIO_NUM_21, GPIO_NUM_22, GPIO_NUM_25, GPIO_NUM_26, GPIO_NUM_33, GPIO_NUM_27};
-static uint32_t gpio_output_level[] = {1, 1, 1, 1, 0, 0};
+static gpio_num_t gpio_output[] = {GPIO_NUM_21, GPIO_NUM_22, GPIO_NUM_25, GPIO_NUM_26, GPIO_NUM_33, GPIO_NUM_27, GPIO_NUM_4};
+static uint32_t gpio_output_level[] = {1, 1, 1, 1, 0, 0, 1};
 static gpio_num_t gpio_input[] = {GPIO_NUM_32, GPIO_NUM_36, GPIO_NUM_37, GPIO_NUM_38, GPIO_NUM_39};
 
 void Demiurge::initialize() {
@@ -87,7 +87,7 @@ void Demiurge::initialize() {
    }
    ESP_LOGI(TAG, "Initialized GPIO done");
 
-   _dac = new MCP4822(GPIO_NUM_13, GPIO_NUM_14, GPIO_NUM_15);
+   _dac = new MCP4822(GPIO_NUM_13, GPIO_NUM_14, GPIO_NUM_15, GPIO_NUM_4);
    _adc = new ADC128S102(GPIO_NUM_23, GPIO_NUM_19, GPIO_NUM_18, GPIO_NUM_5);
 }
 
