@@ -23,39 +23,40 @@ See the License for the specific language governing permissions and
 
 Mixer::Mixer() {
    ESP_LOGI("Mixer", "Constructor: %llx", (uint64_t) this);
-   for (auto &input : _data.inputs)
-      input = nullptr;
    _signal.data = &_data;
    _signal.read_fn = mixer_read;
+   for (auto &input : _data.inputs) {
+      input = nullptr;
+   }
    _signal.extra1 = -1.0;
 }
 
-Mixer::~Mixer() = default;
+Mixer::~Mixer() {
+   for (auto &input : _data.inputs) {
+      if (input != nullptr) {
+
+      }
+   }
+
+};
 
 void Mixer::configure(int number, Signal *source, Signal *control) {
+   int index = number - 1;
    configASSERT(number > 0 && number <= DEMIURGE_MAX_MIXER_IN)
+   configASSERT(_data.inputs[index] == nullptr )
+
    auto *v = new Volume();
+   _data.volumes[index] = v;
+   _data.inputs[index] = &v->_signal;
    v->configure(source, control);
-   _data.inputs[number - 1] = &v->_signal;
-   for (int i = 0; i < DEMIURGE_MAX_MIXER_IN; i++) {
-      _data.inputs[i] = nullptr;
-   }
 }
 
 float IRAM_ATTR mixer_read(signal_t *handle, uint64_t time) {
-   auto *mixer = (mixer_t *) handle->data;
    if (time > handle->last_calc) {
       handle->last_calc = time;
+      auto *mixer = (mixer_t *) handle->data;
       float output = 0;
       int counter = 0;
-      if (handle->extra1 == -1.0) {
-         ESP_LOGD("Mixer", "Inputs: %llx      %llx      %llx      %llx",
-                  (uint64_t) mixer->inputs[0],
-                  (uint64_t) mixer->inputs[1],
-                  (uint64_t) mixer->inputs[2],
-                  (uint64_t) mixer->inputs[3]);
-      }
-
       for (auto inp : mixer->inputs) {
          if (inp != nullptr) {
             output = output + inp->read_fn(inp, time);

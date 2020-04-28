@@ -25,6 +25,7 @@ See the License for the specific language governing permissions and
 
 typedef struct {
    signal_t *inputs[DEMIURGE_MAX_MIXER_IN];
+   Volume *volumes[DEMIURGE_MAX_MIXER_IN];
 } mixer_t;
 
 float mixer_read(signal_t *handle, uint64_t time);
