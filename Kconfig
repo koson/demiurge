@@ -1,7 +1,7 @@
 menu "Demiurge"
 
     config DEMIURGE_DAC_SYNC
-        int "ADC Sync Value"
+        int "DAC Sync Value"
         default "158"
         depends on IDF_TARGET_ESP32
         help
