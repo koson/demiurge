@@ -21,11 +21,11 @@ See the License for the specific language governing permissions and
 
 
 CvInPort::CvInPort(int position) {
-   ESP_LOGD("CvInPort", "Constructor: %llx at position %d", (uint64_t) this, position);
+   ESP_LOGI("CvInPort", "Constructor: %llx at position %d", (uint64_t) this, position);
    configASSERT(position > 0 && position <= 4)
-   _data.position = position + DEMIURGE_CVINPUT_OFFSET;
-   _signal.read_fn = cvinport_read;
    _signal.data = &_data;
+   _signal.read_fn = cvinport_read;
+   _data.position = position + DEMIURGE_CVINPUT_OFFSET;
 }
 
 CvInPort::~CvInPort() = default;

@@ -19,7 +19,8 @@ See the License for the specific language governing permissions and
 #include "Passthru.h"
 
 Passthru::Passthru() {
-   ESP_LOGD("Passthru", "Constructor: %llx", (uint64_t) this );
+   ESP_LOGI("Passthru", "Constructor: %llx", (uint64_t) this );
+   _signal.data = &_data;
    _signal.read_fn = passthru_read;
 }
 
@@ -28,7 +29,6 @@ Passthru::~Passthru() = default;
 void Passthru::configure(Signal *input) {
    _input = input;
    _data.input = &input->_signal;
-   _signal.data = &_data;
 }
 
 float IRAM_ATTR passthru_read(signal_t *handle, uint64_t time) {

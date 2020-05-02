@@ -46,7 +46,7 @@ static void IRAM_ATTR wait_timer_alarm() {
 }
 
 void IRAM_ATTR startInfiniteTask(void *parameter) {
-   ESP_LOGD("MAIN", "Starting audio algorithm in Core %d", xTaskGetAffinity(nullptr));
+   ESP_LOGD(TAG, "Starting audio algorithm in Core %d", xTaskGetAffinity(nullptr));
    auto *demiurge = static_cast<Demiurge *>(parameter);
    demiurge->initialize();
    initialize_tick_timer(demiurge->_ticks_per_second);
@@ -68,8 +68,8 @@ Demiurge::Demiurge() {
    initializeSinks();
 };
 
-static gpio_num_t gpio_output[] = {GPIO_NUM_21, GPIO_NUM_22, GPIO_NUM_25, GPIO_NUM_26, GPIO_NUM_33, GPIO_NUM_27};
-static uint32_t gpio_output_level[] = {1, 1, 1, 1, 0, 0};
+static gpio_num_t gpio_output[] = {GPIO_NUM_21, GPIO_NUM_22, GPIO_NUM_25, GPIO_NUM_26, GPIO_NUM_33, GPIO_NUM_27, GPIO_NUM_4};
+static uint32_t gpio_output_level[] = {1, 1, 1, 1, 0, 0, 1};
 static gpio_num_t gpio_input[] = {GPIO_NUM_32, GPIO_NUM_36, GPIO_NUM_37, GPIO_NUM_38, GPIO_NUM_39};
 
 void Demiurge::initialize() {
@@ -87,7 +87,7 @@ void Demiurge::initialize() {
    }
    ESP_LOGI(TAG, "Initialized GPIO done");
 
-   _dac = new MCP4822(GPIO_NUM_13, GPIO_NUM_14, GPIO_NUM_15);
+   _dac = new MCP4822(GPIO_NUM_13, GPIO_NUM_14, GPIO_NUM_15, GPIO_NUM_4);
    _adc = new ADC128S102(GPIO_NUM_23, GPIO_NUM_19, GPIO_NUM_18, GPIO_NUM_5);
 }
 
@@ -104,7 +104,7 @@ void Demiurge::startRuntime(int ticks_per_second) {
    esp_task_wdt_delete(idleTask);
    ESP_LOGI(TAG, "Executing in Core %d", xTaskGetAffinity(nullptr));
    xTaskCreatePinnedToCore(startInfiniteTask, "Audio", 8192, this, 7, &_taskHandle, 1);
-   vTaskDelay(10);
+   ets_delay_us(200000);
 }
 
 void Demiurge::initializeSinks() {
@@ -125,7 +125,7 @@ void Demiurge::registerSink(signal_t *processor) {
    for (int i = 0; i < DEMIURGE_MAX_SINKS; i++) {
       if (_sinks[i] == nullptr) {
          _sinks[i] = processor;
-         ESP_LOGI("MAIN", "Registering Sink: %d", i);
+         ESP_LOGI(TAG, "Registering Sink: %d", i);
          break;
       }
    }
@@ -194,8 +194,6 @@ float IRAM_ATTR Demiurge::output(int number) {
    return _outputs[number - 1];
 }
 
-static int count = 4;
-
 bool IRAM_ATTR Demiurge::gpio(int pin) {
    return (_gpios >> pin & 1) != 0;
 }
@@ -209,5 +207,27 @@ void Demiurge::set_output(int number, float value) {
    _outputs[number - 1] = value;
 }
 
+void Demiurge::print_overview(const char *tag, Signal *signal) {
+   ESP_LOGI(tag, "Input: %2.1f, %2.1f, %2.1f, %2.1f, %2.1f, %2.1f, %2.1f, %2.1f",
+            input(1),
+            input(2),
+            input(3),
+            input(4),
+            input(5),
+            input(6),
+            input(7),
+            input(8)
+   );
+   ESP_LOGI(tag, "Output: %2.1f, %2.1f",
+            output(1),
+            output(2)
+   );
+   ESP_LOGI(tag, "Extras: %2.1f, %2.1f, %2.1f, %2.1f",
+            signal->extra1(),
+            signal->extra2(),
+            signal->extra3(),
+            signal->extra4()
+   );
 
+}
 #undef TAG

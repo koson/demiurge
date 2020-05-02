@@ -20,11 +20,11 @@ See the License for the specific language governing permissions and
 
 
 AudioInPort::AudioInPort(int position) {
-   ESP_LOGD("AudioInPort", "Constructor: %llx at position %d", (uint64_t) this, position );
+   ESP_LOGI("AudioInPort", "Constructor: %llx at position %d", (uint64_t) this, position );
    configASSERT(position > 0 && position <= 4)
-   _data.position = position;
-   _signal.read_fn = audioinport_read;
    _signal.data = &_data;
+   _signal.read_fn = audioinport_read;
+   _data.position = position;
 }
 
 AudioInPort::~AudioInPort() = default;

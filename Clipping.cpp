@@ -17,13 +17,13 @@ See the License for the specific language governing permissions and
 #include "Clipping.h"
 
 float clipGate(float value) {
-   if (value >= 0.5) return 1.0;
-   return 0.0;
+   if (value >= 0.5) return 10.0;
+   return -10.0;
 }
 
 float clipCV(float value) {
-   if (value >= 5.0) return 5.0;
-   if (value <= -5.0) return -5.0;
+   if (value >= 10.0) return 10.0;
+   if (value <= -10.0) return -10.0;
    return value;
 }
 

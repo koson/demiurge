@@ -28,7 +28,6 @@ const ledc_channel_t LED_CHANNEL[] = {LEDC_CHANNEL_0, LEDC_CHANNEL_1, LEDC_CHANN
 
 typedef struct {
    int position;
-   signal_t *me;
    signal_t *input;
    int fade_time_ms;
    bool registered;

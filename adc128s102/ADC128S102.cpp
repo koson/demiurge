@@ -39,14 +39,15 @@ static void initialize(gpio_num_t pin_out) {
    WRITE_PERI_REG(MCPWM_OPERATOR_TIMERSEL_REG(0), (1 << MCPWM_OPERATOR1_TIMERSEL_S));
 
    WRITE_PERI_REG(MCPWM_GEN1_TSTMP_A_REG(0), 512);  // 128 cycles LOW after UTEZ.
-   WRITE_PERI_REG(MCPWM_GEN1_A_REG(0),
-                  (1 << MCPWM_GEN1_A_UTEZ_S) | (2 << MCPWM_GEN1_A_UTEA_S)); // UTEZ= set PWM0A low, UTEA=set PWM0A high
 
-   WRITE_PERI_REG(MCPWM_TIMER1_CFG0_REG(0), 3 << MCPWM_TIMER1_PRESCALE_S | 639
-         << MCPWM_TIMER1_PERIOD_S);    // Prescale=16, so timer is 10MHz, 40 clocks per cycle
-   WRITE_PERI_REG(MCPWM_TIMER1_CFG1_REG(0), (1 << MCPWM_TIMER1_MOD_S) |
-                                            (2 << MCPWM_TIMER1_START_S));        // Continuously running, decrease mode.
+   // UTEZ= set PWM0A low, UTEA=set PWM0A high
+   WRITE_PERI_REG(MCPWM_GEN1_A_REG(0),(1 << MCPWM_GEN1_A_UTEZ_S) | (2 << MCPWM_GEN1_A_UTEA_S));
 
+   // Prescale=4, so timer is 20MHz, 640 clocks per cycle
+   WRITE_PERI_REG(MCPWM_TIMER1_CFG0_REG(0), 3 << MCPWM_TIMER1_PRESCALE_S | 639<< MCPWM_TIMER1_PERIOD_S);
+
+   // Continuously running, decrease mode.
+   WRITE_PERI_REG(MCPWM_TIMER1_CFG1_REG(0), (1 << MCPWM_TIMER1_MOD_S) |(2 << MCPWM_TIMER1_START_S));
 }
 
 ADC128S102::ADC128S102(gpio_num_t mosi_pin, gpio_num_t miso_pin, gpio_num_t sclk_pin, gpio_num_t cs_pin) {
@@ -98,18 +99,17 @@ ADC128S102::ADC128S102(gpio_num_t mosi_pin, gpio_num_t miso_pin, gpio_num_t sclk
 
    // Values to be written during time critical stage
    auto s1 = (1 << MCPWM_TIMER1_MOD_S) | (2 << MCPWM_TIMER1_START_S);
-   auto s3 = (221 << MCPWM_TIMER1_PHASE_S) | (0 << MCPWM_TIMER1_SYNCO_SEL) | (1 << MCPWM_TIMER1_SYNC_SW_S);
+   auto s3 = (65 << MCPWM_TIMER1_PHASE_S) | (0 << MCPWM_TIMER1_SYNCO_SEL) | (1 << MCPWM_TIMER1_SYNC_SW_S);
 
-   portDISABLE_INTERRUPTS();  // No interference in timing.
-   initialize(cs_pin);
 
    esp_err_t error = aaa_spi_prepare_circular(VSPI_HOST, 2, out, in, 10000000, mosi_pin, miso_pin, sclk_pin, 0);
    ESP_ERROR_CHECK(error);
 
    spi_dev_t *const spiHw = aaa_spi_get_hw_for_host(VSPI_HOST);
 
-   // this bit of code makes sure both timers and SPI transfer are started as close together as possible
+   portDISABLE_INTERRUPTS();  // No interference in timing.
    for (int i = 0; i < 2; i++) {  // Make sure SPI Flash fetches doesn't interfere
+      initialize(cs_pin);
 
       //Reset DMA
       spiHw->dma_out_link.start = 0;
@@ -132,8 +132,8 @@ ADC128S102::ADC128S102(gpio_num_t mosi_pin, gpio_num_t miso_pin, gpio_num_t sclk
 
       WRITE_PERI_REG(MCPWM_TIMER1_SYNC_REG(0), s3);
    }
-
    portENABLE_INTERRUPTS();
+
    ESP_LOGI(TAG, "Initializing ADC SPI.....Done");
 
 }

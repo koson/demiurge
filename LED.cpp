@@ -23,12 +23,11 @@ See the License for the specific language governing permissions and
 // TODO: This code should be refactored so that all the hardware specifics goes to Demiurge::runtime(), and we can later devise a "driver" system if there are more boards being made.
 
 LED::LED(int position) {
-   ESP_LOGD("LED", "Constructor: %llx", (uint64_t) this);
+   ESP_LOGI("LED", "Constructor: %llx", (uint64_t) this);
    configASSERT(position > 0 && position <= 4)
-   _data.me = &_signal;
-   _data.position = position;
-   _signal.read_fn = led_read;
    _signal.data = &_data;
+   _signal.read_fn = led_read;
+   _data.position = position;
    _data.channel = LED_CHANNEL[position - 1];
    _data.fade_time_ms = 100;
 

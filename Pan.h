@@ -21,7 +21,6 @@ See the License for the specific language governing permissions and
 
 typedef struct {
    float factor;
-   signal_t *me;
    signal_t *control;
    signal_t *hostInput;
 } panchannel_t;

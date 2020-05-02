@@ -21,7 +21,6 @@ See the License for the specific language governing permissions and
 
 typedef struct {
    int position;
-   signal_t *me;
    signal_t *input;
    bool registered;
 } gate_out_port_t;

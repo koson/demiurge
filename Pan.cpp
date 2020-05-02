@@ -20,7 +20,7 @@ See the License for the specific language governing permissions and
 
 
 Pan::Pan() {
-   ESP_LOGD("Pan", "Constructor: %llx", (uint64_t) this );
+   ESP_LOGI("Pan", "Constructor: %llx", (uint64_t) this );
    _left = new PanChannel(this, 0.5);
    _right = new PanChannel(this, -0.5);
 };
@@ -52,10 +52,9 @@ Signal *Pan::outputRight() {
 
 PanChannel::PanChannel(Pan *host, float factor) {
    _host = host;
-   _signal.read_fn = panchannel_read;
    _signal.data = &_data;
+   _signal.read_fn = panchannel_read;
    _data.factor = factor;
-   _data.me = &_signal;
 }
 
 PanChannel::~PanChannel() = default;
@@ -69,7 +68,6 @@ float IRAM_ATTR panchannel_read(signal_t *handle, uint64_t time) {
       signal_t *hostInput = panchannel->hostInput;
       float input = hostInput->read_fn(hostInput, time);
       input = input * control;
-      signal_t *data = panchannel->me;
       float result = input * panchannel->factor;
       handle->cached = result;
       return result;
