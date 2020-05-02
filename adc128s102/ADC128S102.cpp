@@ -99,7 +99,7 @@ ADC128S102::ADC128S102(gpio_num_t mosi_pin, gpio_num_t miso_pin, gpio_num_t sclk
 
    // Values to be written during time critical stage
    auto s1 = (1 << MCPWM_TIMER1_MOD_S) | (2 << MCPWM_TIMER1_START_S);
-   auto s3 = (65 << MCPWM_TIMER1_PHASE_S) | (0 << MCPWM_TIMER1_SYNCO_SEL) | (1 << MCPWM_TIMER1_SYNC_SW_S);
+   auto s3 = (CONFIG_DEMIURGE_ADC_SYNC << MCPWM_TIMER1_PHASE_S) | (0 << MCPWM_TIMER1_SYNCO_SEL) | (1 << MCPWM_TIMER1_SYNC_SW_S);
 
 
    esp_err_t error = aaa_spi_prepare_circular(VSPI_HOST, 2, out, in, 10000000, mosi_pin, miso_pin, sclk_pin, 0);

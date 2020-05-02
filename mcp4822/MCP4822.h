@@ -24,6 +24,10 @@ See the License for the specific language governing permissions and
 #define MCP4822_ACTIVE 0x10
 #define MCP4822_GAIN 0x20
 
+#ifndef CONFIG_DEMIURGE_DAC_SYNC
+#define CONFIG_DEMIURGE_DAC_SYNC 158
+#endif
+
 class MCP4822
 {
 public:

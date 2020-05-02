@@ -20,6 +20,10 @@ See the License for the specific language governing permissions and
 #include "driver/spi_master.h"
 #include "driver/gpio.h"
 
+#ifndef CONFIG_DEMIURGE_ADC_SYNC
+#define CONFIG_DEMIURGE_ADC_SYNC 65
+#endif
+
 class ADC128S102
 {
 public:

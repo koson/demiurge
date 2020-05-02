@@ -84,7 +84,7 @@ MCP4822::MCP4822(gpio_num_t mosi_pin, gpio_num_t sclk_pin, gpio_num_t cs_pin, gp
    // Values to be written during time critical stage
    auto s0 = 1 << SPI_USR_S;
    auto s1 = (1 << MCPWM_TIMER0_MOD_S) | (2 << MCPWM_TIMER0_START_S);
-   auto s3 = (158 << MCPWM_TIMER0_PHASE_S) | (0 << MCPWM_TIMER0_SYNCO_SEL_S) | (1 << MCPWM_TIMER0_SYNC_SW_S);
+   auto s3 = (CONFIG_DEMIURGE_DAC_SYNC << MCPWM_TIMER0_PHASE_S) | (0 << MCPWM_TIMER0_SYNCO_SEL_S) | (1 << MCPWM_TIMER0_SYNC_SW_S);
 
    gpio_set_level(cs_pin, 0);
    portDISABLE_INTERRUPTS();  // No interference in timing.
