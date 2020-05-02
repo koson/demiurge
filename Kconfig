@@ -1,0 +1,18 @@
+menu "Demiurge"
+
+    config DEMIURGE_DAC_SYNC
+        int "ADC Sync Value"
+        default "158"
+        depends on IDF_TARGET_ESP32
+        help
+            The number of clock cycles needed to sync the TIMER and SPI for the D/A converter.
+
+    config DEMIURGE_ADC_SYNC
+        int "ADC Sync Value"
+        default "65"
+        depends on IDF_TARGET_ESP32
+        help
+            The number of clock cycles needed to sync the TIMER and SPI for the A/D converter.
+
+endmenu
+
