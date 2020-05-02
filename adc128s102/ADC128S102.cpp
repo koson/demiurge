@@ -15,7 +15,6 @@ See the License for the specific language governing permissions and
 */
 
 #include <string.h>
-#include <esp_log.h>
 #include <driver/periph_ctrl.h>
 #include <soc/mcpwm_struct.h>
 #include <soc/mcpwm_reg.h>
@@ -51,8 +50,6 @@ static void initialize(gpio_num_t pin_out) {
 }
 
 ADC128S102::ADC128S102(gpio_num_t mosi_pin, gpio_num_t miso_pin, gpio_num_t sclk_pin, gpio_num_t cs_pin) {
-   ESP_LOGI(TAG, "Initializing ADC SPI.");
-
    out = static_cast<lldesc_t *>(heap_caps_malloc(sizeof(lldesc_t), MALLOC_CAP_DMA));
 
    memset((void *) out, 0, sizeof(lldesc_t));
@@ -133,9 +130,6 @@ ADC128S102::ADC128S102(gpio_num_t mosi_pin, gpio_num_t miso_pin, gpio_num_t sclk
       WRITE_PERI_REG(MCPWM_TIMER1_SYNC_REG(0), s3);
    }
    portENABLE_INTERRUPTS();
-
-   ESP_LOGI(TAG, "Initializing ADC SPI.....Done");
-
 }
 
 ADC128S102::~ADC128S102() {

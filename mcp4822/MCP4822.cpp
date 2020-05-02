@@ -16,7 +16,6 @@ See the License for the specific language governing permissions and
 
 #include <string.h>
 #include <driver/ledc.h>
-#include <esp_log.h>
 #include <driver/mcpwm.h>
 #include <driver/periph_ctrl.h>
 #include "driver/spi_master.h"
@@ -54,8 +53,6 @@ static void initialize(gpio_num_t pin_out) {
 }
 
 MCP4822::MCP4822(gpio_num_t mosi_pin, gpio_num_t sclk_pin, gpio_num_t cs_pin) {
-   ESP_LOGI(TAG, "Initializing DAC SPI.");
-
    out = static_cast<lldesc_t *>(heap_caps_malloc(sizeof(lldesc_t), MALLOC_CAP_DMA));
    memset((void *) out, 0, sizeof(lldesc_t));
    out->size = 8;
@@ -74,7 +71,6 @@ MCP4822::MCP4822(gpio_num_t mosi_pin, gpio_num_t sclk_pin, gpio_num_t cs_pin) {
    out->buf[5] = 0x55;
    out->buf[6] = 0x55;
    out->buf[7] = 0xFF;
-   ESP_LOGD(TAG, "Buffer address: %llx", (uint64_t) out->buf);
 
    esp_err_t er = aaa_spi_prepare_circular(HSPI_HOST, 1, out, nullptr, 10000000, mosi_pin, GPIO_NUM_MAX, sclk_pin, 0);
    ESP_ERROR_CHECK(er);
@@ -105,8 +101,6 @@ MCP4822::MCP4822(gpio_num_t mosi_pin, gpio_num_t sclk_pin, gpio_num_t cs_pin) {
       WRITE_PERI_REG(MCPWM_TIMER0_SYNC_REG(0), s3);
    }
    portENABLE_INTERRUPTS();
-
-   ESP_LOGI(TAG, "Initializing DAC SPI.....Done");
 }
 
 void MCP4822::setOutput(int16_t out1, int16_t out2) {
@@ -125,8 +119,6 @@ void MCP4822::setOutput(int16_t out1, int16_t out2) {
 }
 
 MCP4822::~MCP4822() {
-   ESP_LOGI(TAG, "Destruction of MCP4822");
-
    // Stop hardware
 // TODO: Is this actually correct? Take away for now.
 //   WRITE_PERI_REG(SPI_CMD_REG(3), READ_PERI_REG(SPI_CMD_REG(3)) & ~SPI_USR_M); // stop SPI transfer
