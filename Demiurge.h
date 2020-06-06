@@ -50,8 +50,10 @@ See the License for the specific language governing permissions and
 #include "Threshold.h"
 #include "Volume.h"
 
-#include "adc128s102/ADC128S102.h"
-#include "mcp4822/MCP4822.h"
+//#include "adc128s102/ADC128S102.h"
+//#include "mcp4822/MCP4822.h"
+#include "tlv320/Tlv320aic3104.h"
+#include "mclk/Mclk.h"
 
 #define DEMIURGE_MAX_SINKS 6
 
@@ -125,8 +127,11 @@ private:
    float _outputs[2] = {0.0f, 0.0f};
    TaskHandle_t _taskHandle = nullptr;
    uint64_t timerCounter = 0;         // in microseconds, increments 50 at a time.
-   MCP4822 *_dac = nullptr;
-   ADC128S102 *_adc = nullptr;
+   Tlv320aic3104 *_i2s = nullptr;
+   Mclk *_mclk = nullptr;
+
+   //   MCP4822 *_dac = nullptr;
+//   ADC128S102 *_adc = nullptr;
 
 };
 

@@ -46,8 +46,10 @@ idf_component_register(
         Threshold.cpp
         Volume.cpp
         adc128s102/ADC128S102.cpp
+        mclk/Mclk.cpp
         mcp4822/MCP4822.cpp
         spi/aaa_spi.c
+        tlv320/Tlv320aic3104.cpp
     INCLUDE_DIRS "."
 )
 
