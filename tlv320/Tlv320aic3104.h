@@ -8,7 +8,7 @@
 #include <esp32/rom/lldesc.h>
 #include <hal/i2s_types.h>
 #include <soc/i2s_reg.h>
-#include <driver/i2s_print.h>
+#include <driver/i2s.h>
 #include <hal/i2s_hal.h>
 
 static const int FIFO_TX_SIZE = 32;

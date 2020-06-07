@@ -3,17 +3,17 @@
 #include <hal/gpio_types.h>
 #include <hal/i2s_types.h>
 #include <esp_intr.h>
-#include <driver/i2s_print.h>
+#include <driver/i2s.h>
 #include <esp32/rom/lldesc.h>
 #include "hal/i2s_hal.h"
 #include <esp_log.h>
 #include <cstring>
 #include "Tlv320aic3104.h"
-#include "i2s_print.h"
+#include "i2s/i2s_print.h"
 
 #define TAG "TLV320"
 
-#define DMA_SIZE 8 // FIFO is 32 bits wide, and one FIFO per channel?
+#define DMA_SIZE 128
 
 void Tlv320aic3104::setup_setup_ll_desc() {
    out = static_cast<lldesc_t *>(heap_caps_malloc(sizeof(lldesc_t), MALLOC_CAP_DMA));
@@ -25,10 +25,7 @@ void Tlv320aic3104::setup_setup_ll_desc() {
    out->eof = 0;
    out->qe.stqe_next = out;
    out->buf = static_cast<uint8_t *>(heap_caps_malloc(DMA_SIZE, MALLOC_CAP_DMA));
-   out->buf[0] = 1;
-   out->buf[1] = 2;
-   out->buf[2] = 3;
-   out->buf[3] = 4;
+   memset((void *) out->buf, 0, 4);
    out->owner = 1;
 
    in = static_cast<lldesc_t *>(heap_caps_malloc(sizeof(lldesc_t), MALLOC_CAP_DMA));
@@ -40,7 +37,7 @@ void Tlv320aic3104::setup_setup_ll_desc() {
    in->eof = 0;
    in->qe.stqe_next = in;
    in->buf = static_cast<uint8_t *>(heap_caps_malloc(DMA_SIZE, MALLOC_CAP_DMA));
-   memset((void *) in->buf, 0, 4);
+   memset((void *) in->buf, 0, DMA_SIZE);
    in->owner = 1;
 }
 
@@ -48,9 +45,7 @@ void Tlv320aic3104::setup_i2s(gpio_num_t bclk_pin, gpio_num_t ws_pin, gpio_num_t
 
    ESP_LOGI(TAG, "Default values in I2S bitfields");
    ESP_LOGI(TAG, "-------------------------------");
-   i2s_print(&i2s_context);
 
-   setup_setup_ll_desc();
    // Needed to enable gpio direction?
 //   gpio_set_direction(ws_pin, GPIO_MODE_OUTPUT);
 //   gpio_set_direction(bclk_pin, GPIO_MODE_OUTPUT);
@@ -77,6 +72,9 @@ void Tlv320aic3104::setup_i2s(gpio_num_t bclk_pin, gpio_num_t ws_pin, gpio_num_t
       gpio_matrix_in(bclk_pin, I2S1I_BCK_IN_IDX, false); // route BCK_OUT back to BCK_IN
       gpio_matrix_in(ws_pin, I2S1I_WS_IN_IDX, false);    // route WS_OUT back to WS_IN
    }
+//   i2s_print(i2s_context.dev);
+
+   setup_setup_ll_desc();
 
    ESP_LOGI(TAG, "DOUT: %d", dout);
    ESP_LOGI(TAG, " DIN: %d", din);
