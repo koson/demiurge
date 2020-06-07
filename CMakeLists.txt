@@ -50,6 +50,7 @@ idf_component_register(
         mcp4822/MCP4822.cpp
         spi/aaa_spi.c
         tlv320/Tlv320aic3104.cpp
+        tlv320/i2s_print.c
     INCLUDE_DIRS "."
 )
 

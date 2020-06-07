@@ -8,7 +8,7 @@
 #include <esp32/rom/lldesc.h>
 #include <hal/i2s_types.h>
 #include <soc/i2s_reg.h>
-#include <driver/i2s.h>
+#include <driver/i2s_print.h>
 #include <hal/i2s_hal.h>
 
 static const int FIFO_TX_SIZE = 32;
@@ -36,7 +36,7 @@ private:
    void setup_i2s(gpio_num_t bclk_pin, gpio_num_t ws_pin, gpio_num_t din, gpio_num_t dout);
 
    int idle_counter = 0;
-   int queue_check_counter = 0;
+   int print_counter = 0;
 
    void reset_external_chip() const;
 
