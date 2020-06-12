@@ -34,6 +34,10 @@ typedef struct signal_t {
    float extra2;
    float extra3;
    float extra4;
+   float extra5;
+   float extra6;
+   float extra7;
+   float extra8;
    signal_fn read_fn;
    uint64_t last_calc = 0;
    float cached;
@@ -55,6 +59,14 @@ public:
    float extra3();
 
    float extra4();
+
+   float extra5();
+
+   float extra6();
+
+   float extra7();
+
+   float extra8();
 };
 
 #endif

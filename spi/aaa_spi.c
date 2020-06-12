@@ -143,14 +143,14 @@ esp_err_t aaa_spi_prepare_circular(const spi_host_device_t spiHostDevice, const 
    gpio_matrix_out(sclk_gpio_num, getSpiClkOutByHost(spiHostDevice), false, false);
    gpio_matrix_in(sclk_gpio_num, getSpiClkInByHost(spiHostDevice), false);
 
-   //Select DMA channel.
-   DPORT_SET_PERI_REG_BITS(DPORT_SPI_DMA_CHAN_SEL_REG, 3, dma_chan, (spiHostDevice * 2));
-
-   //Reset DMA
-   spiHw->dma_conf.val |= SPI_OUT_RST | SPI_IN_RST | SPI_AHBM_RST | SPI_AHBM_FIFO_RST;
-   spiHw->dma_out_link.start = 0;
-   spiHw->dma_in_link.start = 0;
-   spiHw->dma_conf.val &= ~(SPI_OUT_RST | SPI_IN_RST | SPI_AHBM_RST | SPI_AHBM_FIFO_RST);
+//   //Select DMA channel.
+//   DPORT_SET_PERI_REG_BITS(DPORT_SPI_DMA_CHAN_SEL_REG, 3, dma_chan, (spiHostDevice * 2));
+//
+//   //Reset DMA
+//   spiHw->dma_conf.val |= SPI_OUT_RST | SPI_IN_RST | SPI_AHBM_RST | SPI_AHBM_FIFO_RST;
+//   spiHw->dma_out_link.start = 0;
+//   spiHw->dma_in_link.start = 0;
+//   spiHw->dma_conf.val &= ~(SPI_OUT_RST | SPI_IN_RST | SPI_AHBM_RST | SPI_AHBM_FIFO_RST);
 
    spiHw->ctrl.val = 0;
    spiHw->user.val = 0;
@@ -237,12 +237,12 @@ esp_err_t aaa_spi_prepare_circular(const spi_host_device_t spiHostDevice, const 
    spiHw->pin.cs1_dis = 1;
    spiHw->pin.cs2_dis = 1;
 
-   //Reset SPI peripheral
-   spiHw->dma_conf.val |= SPI_OUT_RST | SPI_IN_RST | SPI_AHBM_RST | SPI_AHBM_FIFO_RST;
-   spiHw->dma_out_link.start = 0;
-   spiHw->dma_in_link.start = 0;
-   spiHw->dma_conf.val &= ~(SPI_OUT_RST | SPI_IN_RST | SPI_AHBM_RST | SPI_AHBM_FIFO_RST);
-   spiHw->dma_conf.out_data_burst_en = 1;
+//   //Reset SPI peripheral
+//   spiHw->dma_conf.val |= SPI_OUT_RST | SPI_IN_RST | SPI_AHBM_RST | SPI_AHBM_FIFO_RST;
+//   spiHw->dma_out_link.start = 0;
+//   spiHw->dma_in_link.start = 0;
+//   spiHw->dma_conf.val &= ~(SPI_OUT_RST | SPI_IN_RST | SPI_AHBM_RST | SPI_AHBM_FIFO_RST);
+//   spiHw->dma_conf.out_data_burst_en = 1;
 
    //DMA temporary workaround: let RX DMA work somehow to avoid the issue in ESP32 v0/v1 silicon
 //   spiHw->dma_in_link.addr = 0;

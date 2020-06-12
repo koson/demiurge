@@ -38,4 +38,16 @@ float Signal::extra3() {
 float Signal::extra4() {
    return _signal.extra4;
 };
+float Signal::extra5() {
+   return _signal.extra5;
+};
+float Signal::extra6() {
+   return _signal.extra6;
+};
+float Signal::extra7() {
+   return _signal.extra7;
+};
+float Signal::extra8() {
+   return _signal.extra8;
+};
 

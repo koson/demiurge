@@ -22,6 +22,7 @@ See the License for the specific language governing permissions and
 #include <soc/mcpwm_struct.h>
 #include <soc/mcpwm_reg.h>
 #include <esp_system.h>
+#include <esp_log.h>
 
 #include "MCP4822.h"
 #include "../spi/aaa_spi.h"
@@ -52,7 +53,8 @@ static void initialize(gpio_num_t pin_out) {
    WRITE_PERI_REG(MCPWM_TIMER0_CFG1_REG(0), (1 << MCPWM_TIMER0_MOD_S) | (2 << MCPWM_TIMER0_START_S));
 }
 
-MCP4822::MCP4822(gpio_num_t mosi_pin, gpio_num_t sclk_pin, gpio_num_t cs_pin) {
+void MCP4822::initialize_spi(gpio_num_t mosi_pin, gpio_num_t sclk_pin)
+{
    out = static_cast<lldesc_t *>(heap_caps_malloc(sizeof(lldesc_t), MALLOC_CAP_DMA));
    memset((void *) out, 0, sizeof(lldesc_t));
    out->size = 8;
@@ -72,35 +74,56 @@ MCP4822::MCP4822(gpio_num_t mosi_pin, gpio_num_t sclk_pin, gpio_num_t cs_pin) {
    out->buf[6] = 0x55;
    out->buf[7] = 0xFF;
 
+}
+
+MCP4822::MCP4822(gpio_num_t mosi_pin, gpio_num_t sclk_pin, gpio_num_t cs_pin) {
+
+//   initialize_spi(mosi_pin, sclk_pin);
+   spiHw = aaa_spi_get_hw_for_host(HSPI_HOST);
+   PIN_FUNC_SELECT(GPIO_PIN_MUX_REG[cs_pin], PIN_FUNC_GPIO);
+   gpio_set_direction(cs_pin, GPIO_MODE_INPUT_OUTPUT);
+   gpio_matrix_out(cs_pin, HSPICS0_OUT_IDX, false, false);
+   gpio_matrix_in(cs_pin, HSPICS0_IN_IDX, false);
+
    esp_err_t er = aaa_spi_prepare_circular(HSPI_HOST, 1, out, nullptr, 10000000, mosi_pin, GPIO_NUM_MAX, sclk_pin, 0);
    ESP_ERROR_CHECK(er);
-   spi_dev_t *const spiHw = aaa_spi_get_hw_for_host(HSPI_HOST);
-
+   spiHw->pin.cs0_dis = 0;
+   spiHw->pin.cs1_dis = 0;
+   spiHw->pin.cs2_dis = 0;
+   spiHw->pin.cs_keep_active = 0;
+   spiHw->pin.master_cs_pol = 0;
+   spiHw->ctrl2.cs_delay_mode = 0;
+   spiHw->ctrl2.cs_delay_num = 0;
+   spiHw->user.wr_byte_order = 1;
+   spiHw->user.cs_hold = 1;
+   spiHw->user.cs_setup = 1;
+   spiHw->mosi_dlen.usr_mosi_dbitlen = 31;
+   spiHw->user.usr_mosi = 1;
 
    // Values to be written during time critical stage
-   auto s0 = 1 << SPI_USR_S;
-   auto s1 = (1 << MCPWM_TIMER0_MOD_S) | (2 << MCPWM_TIMER0_START_S);
-   auto s3 = (CONFIG_DEMIURGE_DAC_SYNC << MCPWM_TIMER0_PHASE_S) | (0 << MCPWM_TIMER0_SYNCO_SEL_S) | (1 << MCPWM_TIMER0_SYNC_SW_S);
+//   auto s0 = 1 << SPI_USR_S;
+//   auto s1 = (1 << MCPWM_TIMER0_MOD_S) | (2 << MCPWM_TIMER0_START_S);
+//   auto s3 = (CONFIG_DEMIURGE_DAC_SYNC << MCPWM_TIMER0_PHASE_S) | (0 << MCPWM_TIMER0_SYNCO_SEL_S) | (1 << MCPWM_TIMER0_SYNC_SW_S);
 
-   portDISABLE_INTERRUPTS();  // No interference in timing.
-   for (int i = 0; i < 2; i++) {  // Make sure SPI Flash fetches doesn't interfere
+//   portDISABLE_INTERRUPTS();  // No interference in timing.
+//   for (int i = 0; i < 2; i++) {  // Make sure SPI Flash fetches doesn't interfere
 
-      initialize(cs_pin);
-      spiHw->dma_out_link.start = 0;   // Stop SPI DMA transfer (1)
-      spiHw->cmd.usr = 0;   // SPI: Stop SPI DMA transfer
+//      initialize(cs_pin);
+//      spiHw->dma_out_link.start = 0;   // Stop SPI DMA transfer (1)
+//      spiHw->cmd.usr = 0;   // SPI: Stop SPI DMA transfer
 
       // --- sync to known prescaled cycle.
-      auto reg = READ_PERI_REG(MCPWM_TIMER0_STATUS_REG(0));
-      while (reg == READ_PERI_REG(MCPWM_TIMER0_STATUS_REG(0)));
+//      auto reg = READ_PERI_REG(MCPWM_TIMER0_STATUS_REG(0));
+//      while (reg == READ_PERI_REG(MCPWM_TIMER0_STATUS_REG(0)));
 
-      spiHw->dma_out_link.start = 1;
-      spiHw->cmd.usr = 1;
-      WRITE_PERI_REG(MCPWM_TIMER0_CFG1_REG(0), s1); // start timer 0
-      WRITE_PERI_REG(SPI_CMD_REG(3), s0); // start SPI transfer
+//      spiHw->dma_out_link.start = 1;
+//      spiHw->cmd.usr = 1;
+//      WRITE_PERI_REG(MCPWM_TIMER0_CFG1_REG(0), s1); // start timer 0
+//      WRITE_PERI_REG(SPI_CMD_REG(3), s0); // start SPI transfer
 
-      WRITE_PERI_REG(MCPWM_TIMER0_SYNC_REG(0), s3);
-   }
-   portENABLE_INTERRUPTS();
+//      WRITE_PERI_REG(MCPWM_TIMER0_SYNC_REG(0), s3);
+//   }
+//   portENABLE_INTERRUPTS();
 }
 
 void MCP4822::setOutput(int16_t out1, int16_t out2) {
@@ -110,12 +133,12 @@ void MCP4822::setOutput(int16_t out1, int16_t out2) {
       out1 = 0;
    if (out2 > 4095)
       out2 = 4095;
-   if (out2 > 0)
+   if (out2 < 0)
       out2 = 0;
-   out->buf[0] = MCP4822_CHANNEL_B | MCP4822_ACTIVE | MCP4822_GAIN | ((out1 >> 8) & 0x0F);
-   out->buf[1] = out1 & 0xFF;
-   out->buf[2] = MCP4822_CHANNEL_A | MCP4822_ACTIVE | MCP4822_GAIN | ((out2 >> 8) & 0x0F);
-   out->buf[3] = out2 & 0xFF;
+   spiHw->data_buf[0] =
+         (( MCP4822_CHANNEL_A | MCP4822_ACTIVE | MCP4822_GAIN | out1 ) << 16)
+         | (( MCP4822_CHANNEL_B | MCP4822_ACTIVE | MCP4822_GAIN | out2 ) );
+   spiHw->cmd.usr = 1;
 }
 
 MCP4822::~MCP4822() {

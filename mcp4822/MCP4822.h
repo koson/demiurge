@@ -19,10 +19,10 @@ See the License for the specific language governing permissions and
 
 #include "driver/spi_master.h"
 
-#define MCP4822_CHANNEL_A 0x00
-#define MCP4822_CHANNEL_B 0x80
-#define MCP4822_ACTIVE 0x10
-#define MCP4822_GAIN 0x20
+#define MCP4822_CHANNEL_A 0x0000
+#define MCP4822_CHANNEL_B 0x8000
+#define MCP4822_ACTIVE 0x1000
+#define MCP4822_GAIN 0x2000
 
 #ifndef CONFIG_DEMIURGE_DAC_SYNC
 #define CONFIG_DEMIURGE_DAC_SYNC 158
@@ -38,6 +38,9 @@ public:
 
    lldesc_t *out;
 private:
+   void initialize_spi(gpio_num_t mosi_pin, gpio_num_t sclk_pin);
+
+   spi_dev_t *spiHw;
 };
 
 

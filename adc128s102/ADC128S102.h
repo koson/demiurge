@@ -33,6 +33,7 @@ public:
    void copy_buffer(void *dest);
 
 private:
+   spi_dev_t *spiHw;
 
    lldesc_t *out;
 
