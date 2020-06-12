@@ -98,15 +98,9 @@ ADC128S102::ADC128S102(gpio_num_t mosi_pin, gpio_num_t miso_pin, gpio_num_t sclk
    gpio_matrix_in(cs_pin, VSPICS0_IN_IDX, false);
 
    spiHw->user.usr_command = 0;
-   spiHw->pin.cs_keep_active = 0;
-   spiHw->pin.master_cs_pol = 0;
-   spiHw->ctrl2.cs_delay_mode = 0;
-   spiHw->ctrl2.cs_delay_num = 0;
-   spiHw->user.cs_hold = 1;
-   spiHw->user.cs_setup = 1;
    spiHw->mosi_dlen.usr_mosi_dbitlen = 127;
    spiHw->miso_dlen.usr_miso_dbitlen = 127;
-   spiHw->user.wr_byte_order = 0;
+   spiHw->user.wr_byte_order = 1;
    spiHw->user.rd_byte_order = 1;
 
    spiHw->user.usr_mosi = 1;
@@ -122,23 +116,32 @@ ADC128S102::~ADC128S102() {
    // Stop SPI
    spicommon_periph_free(VSPI_HOST);
 }
+//                        01234567012345670123456701234567
+static uint32_t ch1_2 = 0b00001000000000000001000000000000;
+static uint32_t ch3_4 = 0b00011000000000000010000000000000;
+static uint32_t ch5_6 = 0b00101000000000000011000000000000;
+static uint32_t ch7_0 = 0b00111000000000000000000000000000;
 
-static uint16_t pattern[8] = {
-      1 << 3,
-      2 << 3,
-      3 << 3,
-      4 << 3,
-      5 << 3,
-      6 << 3,
-      7 << 3,
-      0
-};
-
-void ADC128S102::copy_buffer(void *dest) {
+void ADC128S102::read_inputs(float *ch ) {
    // get previous cycle's data.
-   memcpy((uint8_t *) dest, (void *) &spiHw->data_buf, 16);
-   memcpy((void *) &spiHw->data_buf, (void *) pattern, 16);
-   spiHw->cmd.usr = 1; // start SPI transfer
+   volatile uint32_t *buf = spiHw->data_buf;
+   ch[3] =-(((buf[0] << 8) + buf[1]) / 204.8f - 10.0f);
+   ch[2] =-(((buf[2] << 8) + buf[3]) / 204.8f - 10.0f);
+   ch[1] =-(((buf[4] << 8) + buf[5]) / 204.8f - 10.0f);
+   ch[0] =-(((buf[6] << 8) + buf[7]) / 204.8f - 10.0f);
+   ch[7] =-(((buf[8] << 8) + buf[9]) / 204.8f - 10.0f);
+   ch[6] =-(((buf[10] << 8) + buf[11]) / 204.8f - 10.0f);
+   ch[5] =-(((buf[12] << 8) + buf[13]) / 204.8f - 10.0f);
+   ch[4] =-(((buf[14] << 8) + buf[15]) / 204.8f - 10.0f);
+
+   // Set up next read cycle.
+   buf[0] = ch1_2;
+   buf[1] = ch3_4;
+   buf[2] = ch5_6;
+   buf[3] = ch7_0;
+
+   // start SPI transfer
+   spiHw->cmd.usr = 1;
 }
 
 #undef TAG

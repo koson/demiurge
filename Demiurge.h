@@ -52,10 +52,8 @@ See the License for the specific language governing permissions and
 
 #include "adc128s102/ADC128S102.h"
 #include "mcp4822/MCP4822.h"
-#include "mclk/Mclk.h"
 
 #define DEMIURGE_MAX_SINKS 6
-
 
 extern "C" {
 void app_main(void);
@@ -112,8 +110,6 @@ private:
 
    ~Demiurge();
 
-   void readADC();
-
    void initializeSinks();
 
    void readGpio();
@@ -124,6 +120,9 @@ private:
    float _outputs[2] = {0.0f, 0.0f};
    TaskHandle_t _taskHandle = nullptr;
    uint64_t timerCounter = 0;         // in microseconds, increments 50 at a time.
+   volatile uint64_t tick_start = 0;
+   volatile uint32_t tick_duration = 0;
+   volatile uint32_t tick_interval = 0;
 
    MCP4822 *_dac = nullptr;
    ADC128S102 *_adc = nullptr;

@@ -33,7 +33,7 @@ public:
    ADC128S102(gpio_num_t mosi_pin, gpio_num_t miso_pin, gpio_num_t sclk_pin, gpio_num_t cs_pin);
    virtual ~ADC128S102();
 
-   void copy_buffer(void *dest);
+   void read_inputs(float *ch );
 
 private:
    spi_dev_t *spiHw;

@@ -19,7 +19,6 @@ See the License for the specific language governing permissions and
 #include <soc/timer_group_reg.h>
 #include <driver/ledc.h>
 #include <driver/i2c.h>
-#include <mclk/Mclk.h>
 #include <mcp4822/MCP4822.h>
 
 #include "Demiurge.h"
@@ -52,6 +51,7 @@ static void IRAM_ATTR wait_timer_alarm() {
    if (counter > 0)
       overrun++;
    WRITE_PERI_REG(TIMG_T0CONFIG_REG(DEMIURGE_TIMER_GROUP), timerRetrig);
+   WRITE_PERI_REG(TIMG_T0LOAD_REG(DEMIURGE_TIMER_GROUP), 1);
 }
 
 void IRAM_ATTR startInfiniteTask(void *parameter) {
@@ -98,6 +98,10 @@ void Demiurge::initialize() {
 
    _dac = new MCP4822(GPIO_NUM_13, GPIO_NUM_14, GPIO_NUM_15);
    _adc = new ADC128S102(GPIO_NUM_23, GPIO_NUM_19, GPIO_NUM_18, GPIO_NUM_5);
+
+   // Initialize timer used for stats in debugging
+   WRITE_PERI_REG(TIMG_T1CONFIG_REG(DEMIURGE_TIMER_GROUP),
+                  (1 << TIMG_T1_DIVIDER_S) | TIMG_T1_EN | TIMG_T1_AUTORELOAD | TIMG_T1_INCREASE);
 
 }
 
@@ -155,10 +159,23 @@ void Demiurge::unregisterSink(signal_t *processor) {
    }
 }
 
+static uint32_t tick_update = 0;
+
 void IRAM_ATTR Demiurge::tick() {
    gpio_set_level(GPIO_NUM_27, 1); // TP1 - Test Point to check timing
+   if (tick_update > 76543) {
+      WRITE_PERI_REG(TIMG_T1UPDATE_REG(DEMIURGE_TIMER_GROUP), tick_update);
+      uint32_t lo = READ_PERI_REG(TIMG_T1LO_REG(DEMIURGE_TIMER_GROUP));
+      uint32_t hi = READ_PERI_REG(TIMG_T1HI_REG(DEMIURGE_TIMER_GROUP));
+      uint64_t now = lo + ((uint64_t) hi << 32);
+      tick_interval = now - tick_start;
+      tick_start = now;
+   }
+   // We are setting the outputs at the start of a cycle, to ensure that the interval is identical from cycle to cycle.
+   _dac->setOutput((uint16_t) ((10.0f - _outputs[0]) * 204.8f), (uint16_t) ((10.0f - _outputs[1]) * 204.8f));
+
    readGpio();
-   readADC();
+   _adc->read_inputs(_inputs);
    timerCounter = timerCounter + 10; // pass along number of microseconds.
 
    for (auto sink : _sinks) {
@@ -166,23 +183,16 @@ void IRAM_ATTR Demiurge::tick() {
          sink->read_fn(sink, timerCounter);  // ignore return value
       }
    }
-   _dac->setOutput((uint16_t) ((10.0f - _outputs[0]) * 204.8f), (uint16_t) ((10.0f - _outputs[1]) * 204.8f));
+   if (tick_update > 76543) {
+      WRITE_PERI_REG(TIMG_T1UPDATE_REG(DEMIURGE_TIMER_GROUP), 1);
+      uint32_t lo = READ_PERI_REG(TIMG_T1LO_REG(DEMIURGE_TIMER_GROUP));
+      uint32_t hi = READ_PERI_REG(TIMG_T1HI_REG(DEMIURGE_TIMER_GROUP));
+      uint64_t now = lo + ((uint64_t) hi << 32);
+      tick_duration = now - tick_start;
+      tick_update = 0;
+   }
+   tick_update++;
    gpio_set_level(GPIO_NUM_27, 0); // TP1 - Test Point to check timing
-}
-
-void IRAM_ATTR Demiurge::readADC() {
-   // Scale inputs and put in the right order. 0-3=Jacks, 4-7=Pots, in Volts.
-   uint8_t buf[20];
-   _adc->copy_buffer(buf);
-
-   _inputs[3] = -(((buf[0] << 8) + buf[1]) / 204.8f - 10.0f);
-   _inputs[2] = -(((buf[2] << 8) + buf[3]) / 204.8f - 10.0f);
-   _inputs[1] = -(((buf[4] << 8) + buf[5]) / 204.8f - 10.0f);
-   _inputs[0] = -(((buf[6] << 8) + buf[7]) / 204.8f - 10.0f);
-   _inputs[7] = -(((buf[8] << 8) + buf[9]) / 204.8f - 10.0f);
-   _inputs[6] = -(((buf[10] << 8) + buf[11]) / 204.8f - 10.0f);
-   _inputs[5] = -(((buf[12] << 8) + buf[13]) / 204.8f - 10.0f);
-   _inputs[4] = -(((buf[14] << 8) + buf[15]) / 204.8f - 10.0f);
 }
 
 void IRAM_ATTR Demiurge::readGpio() {
@@ -210,7 +220,8 @@ void IRAM_ATTR Demiurge::set_output(int number, float value) {
 }
 
 void Demiurge::print_overview(const char *tag, Signal *signal) {
-   ESP_LOGI("TIMING", "overruns=%d", *overrun_ptr);
+   ESP_LOGI("TICK", "interval=%d, duration=%d, start=%lld, overruns=%d", tick_interval, tick_duration, tick_start,
+            *overrun_ptr);
    ESP_LOGI("INPUT", "Input: %2.1f, %2.1f, %2.1f, %2.1f, %2.1f, %2.1f, %2.1f, %2.1f",
             input(1),
             input(2),

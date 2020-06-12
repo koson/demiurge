@@ -97,13 +97,7 @@ MCP4822::MCP4822(gpio_num_t mosi_pin, gpio_num_t sclk_pin, gpio_num_t cs_pin) {
    gpio_matrix_in(cs_pin, HSPICS0_IN_IDX, false);
 
    spiHw->user.usr_command = 0;
-   spiHw->pin.cs_keep_active = 0;
-   spiHw->pin.master_cs_pol = 0;
-   spiHw->ctrl2.cs_delay_mode = 0;
-   spiHw->ctrl2.cs_delay_num = 0;
    spiHw->user.wr_byte_order = 1;
-   spiHw->user.cs_hold = 1;
-   spiHw->user.cs_setup = 1;
    spiHw->mosi_dlen.usr_mosi_dbitlen = 31;
    spiHw->user.usr_mosi = 1;
    initialize_spi_clocks(spiHw);
@@ -119,8 +113,8 @@ void MCP4822::setOutput(int16_t out1, int16_t out2) {
    if (out2 < 0)
       out2 = 0;
    spiHw->data_buf[0] =
-         (( MCP4822_CHANNEL_A | MCP4822_ACTIVE | MCP4822_GAIN | out1 ) << 16)
-         | (( MCP4822_CHANNEL_B | MCP4822_ACTIVE | MCP4822_GAIN | out2 ) );
+         (( MCP4822_CHANNEL_A | MCP4822_ACTIVE | MCP4822_GAIN | out1 ) )
+         | (( MCP4822_CHANNEL_B | MCP4822_ACTIVE | MCP4822_GAIN | out2 ) << 16);
    spiHw->cmd.usr = 1;
 }
 
