@@ -24,9 +24,12 @@ See the License for the specific language governing permissions and
 #define MCP4822_ACTIVE 0x1000
 #define MCP4822_GAIN 0x2000
 
-#ifndef CONFIG_DEMIURGE_DAC_SYNC
-#define CONFIG_DEMIURGE_DAC_SYNC 158
-#endif
+#define DEMIURGE_ESP_ERR(base, x)      ((esp_err_t) ((base) + (x)))
+#define DEMIURGE_ESP_ERR_USER_BASE    (0x40000000)
+#define DEMIURGE_ESP_ERR_SPI_BASE     (DEMIURGE_ESP_ERR_USER_BASE + 0x1000 * 1)
+
+#define DEMIURGE_ESP_ERR_SPI(x)        DEMIURGE_ESP_ERR(DEMIURGE_ESP_ERR_SPI_BASE, (x))
+#define DEMIURGE_ESP_ERR_SPI_HOST_ALREADY_IN_USE      DEMIURGE_ESP_ERR_SPI(4)
 
 class MCP4822
 {

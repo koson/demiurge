@@ -20,9 +20,12 @@ See the License for the specific language governing permissions and
 #include "driver/spi_master.h"
 #include "driver/gpio.h"
 
-#ifndef CONFIG_DEMIURGE_ADC_SYNC
-#define CONFIG_DEMIURGE_ADC_SYNC 65
-#endif
+#define DEMIURGE_ESP_ERR(base, x)      ((esp_err_t) ((base) + (x)))
+#define DEMIURGE_ESP_ERR_USER_BASE    (0x40000000)
+#define DEMIURGE_ESP_ERR_SPI_BASE     (DEMIURGE_ESP_ERR_USER_BASE + 0x1000 * 1)
+
+#define DEMIURGE_ESP_ERR_SPI(x)        DEMIURGE_ESP_ERR(DEMIURGE_ESP_ERR_SPI_BASE, (x))
+#define DEMIURGE_ESP_ERR_SPI_HOST_ALREADY_IN_USE      DEMIURGE_ESP_ERR_SPI(4)
 
 class ADC128S102
 {
