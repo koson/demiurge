@@ -1,0 +1,272 @@
+/*
+  Copyright 2019, Awesome Audio Apparatus.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+      https://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+      limitations under the License.
+*/
+
+#include <esp_log.h>
+#include <esp_task_wdt.h>
+#include <soc/timer_group_reg.h>
+#include <driver/ledc.h>
+#include <mcp4822/MCP4822.h>
+#include <soc/timer_periph.h>
+#include <esp32/dport_access.h>
+#include <adc128s102/ADC128S102.h>
+#include "demiurge.h"
+
+#define TAG_SOUND "SOUND"
+#define TAG_DEMI "DEMI"
+
+static gpio_num_t gpio_output[] = {GPIO_NUM_21, GPIO_NUM_22, GPIO_NUM_25, GPIO_NUM_26, GPIO_NUM_33, GPIO_NUM_27};
+static uint32_t gpio_output_level[] = {1, 1, 1, 1, 0, 0};
+static gpio_num_t gpio_input[] = {GPIO_NUM_32, GPIO_NUM_36, GPIO_NUM_37, GPIO_NUM_38, GPIO_NUM_39};
+static uint64_t nanos_per_tick;
+
+static uint32_t _ticks_per_second;
+static uint32_t _micros_per_tick = 0;
+static uint64_t _gpios;
+static bool _started;
+static uint64_t timerCounter = 0;
+static volatile uint64_t tick_start = 0;
+static volatile uint64_t tick_duration = 0;
+static volatile uint64_t tick_interval = 0;
+static TaskHandle_t task_handle;
+
+signal_t *_sinks[DEMIURGE_MAX_SINKS];
+float _inputs[8] = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
+float _outputs[2] = {0.0f, 0.0f};
+static mcp4822_t _dac;
+static adc128s102_t _adc;
+
+// Overrun increments means that the tick() took longer than the sample time.
+// If you see this happening, either decrease the sample rate or optimize the tick()
+// evaluation to take less time.
+static uint32_t overrun = 0;
+static uint64_t next = 0;
+static uint64_t demi_now;
+
+static void initialize_time() {
+   // Initialize timer used for timing
+   TIMERG0.hw_timer[1].config.divider = 80;         // 80MHz divided by 80, gives us a microsecond clock
+   TIMERG0.hw_timer[1].config.increase = 1;
+   TIMERG0.hw_timer[1].load_high = 0;
+   TIMERG0.hw_timer[1].load_low = 0;
+   TIMERG0.hw_timer[1].config.enable = 1;
+}
+
+static uint64_t current_time() {
+   TIMERG0.hw_timer[1].update = 1;
+   uint64_t lo = TIMERG0.hw_timer[1].cnt_low;
+   uint64_t hi = TIMERG0.hw_timer[1].cnt_high;
+   return lo + (hi << 32) / 40;
+}
+
+static void IRAM_ATTR initialize_tick_timer(int ticks_per_second) {
+   TIMERG0.clk.en = 1;
+   nanos_per_tick = 1000000000 / ticks_per_second;
+   TIMERG0.hw_timer[0].config.divider = 2;         // 80MHz divided by 2, gives us a 1/40MHz tick
+   TIMERG0.hw_timer[0].config.increase = 1;
+   TIMERG0.hw_timer[0].config.alarm_en = 1;
+   TIMERG0.hw_timer[0].config.autoreload = 1;
+
+   TIMERG0.hw_timer[0].load_high = 0;
+   TIMERG0.hw_timer[0].load_low = 0;
+   TIMERG0.hw_timer[0].alarm_high = 0;
+   TIMERG0.hw_timer[0].alarm_low = (nanos_per_tick * 40) / 1000 - 1; // 40 ticks per microsecond
+   TIMERG0.hw_timer[0].reload = 1;
+   TIMERG0.hw_timer[0].config.enable = 1;
+   ESP_LOGI(TAG_SOUND, "Microseconds/tick: %d", TIMERG0.hw_timer[0].alarm_low);
+}
+
+
+static void IRAM_ATTR wait_timer_alarm() {
+   int counter = 0;
+   // According to 18.2.3 in Technical Reference; "The timer alarm enable bit is automatically cleared once an alarm occurs"
+   // So we need to wait for it to clear, and then set it again.
+   while (TIMERG0.hw_timer[0].config.alarm_en) {
+      counter++;
+   }
+   if (counter > 0)
+      overrun++;
+   TIMERG0.hw_timer[0].config.alarm_en = 1;
+}
+
+void demiurge_registerSink(signal_t *processor) {
+   ESP_LOGI(TAG_SOUND, "Registering Sink: %p", (void *) processor);
+   configASSERT(processor != NULL)
+   for (int i = 0; i < DEMIURGE_MAX_SINKS; i++) {
+      if (_sinks[i] == NULL) {
+         _sinks[i] = processor;
+         ESP_LOGI(TAG_SOUND, "Registering Sink: %d", i);
+         break;
+      }
+   }
+}
+
+void demiurge_unregisterSink(signal_t *processor) {
+   ESP_LOGI(TAG_SOUND, "Unregistering Sink: %p", (void *) processor);
+   configASSERT(processor != NULL)
+   for (int i = 0; i < DEMIURGE_MAX_SINKS; i++) {
+      if (_sinks[i] == processor) {
+         _sinks[i] = NULL;
+         ESP_LOGI(TAG_SOUND, "Unregistering Sink: %d, %p", i, (void *) processor);
+         break;
+      }
+   }
+}
+
+#ifdef DEMIURGE_TICK_TIMING
+static uint32_t tick_update = 0;
+#endif
+
+bool IRAM_ATTR demiurge_gpio(int pin) {
+   configASSERT(pin > 0 && pin <= 39)
+   return (_gpios >> pin & 1) != 0;
+}
+
+void IRAM_ATTR demiurge_set_output(int number, float value) {
+   configASSERT(number > 0 && number <= 2)
+   _outputs[number - 1] = value;
+}
+
+void IRAM_ATTR demiurge_print_overview(const char *tag, signal_t *signal) {
+#ifndef CONFIG_ESP_CONSOLE_UART_NONE
+#ifdef DEMIURGE_TICK_TIMING
+   ESP_LOGI("TICK", "interval=%lld, duration=%lld, start=%lld, now=%lld, next=%lld",
+            tick_interval, tick_duration, tick_start, demi_now, next);
+#endif
+   ESP_LOGI(tag, "Input: %2.1f, %2.1f, %2.1f, %2.1f, %2.1f, %2.1f, %2.1f, %2.1f",
+            demiurge_input(1),
+            demiurge_input(2),
+            demiurge_input(3),
+            demiurge_input(4),
+            demiurge_input(5),
+            demiurge_input(6),
+            demiurge_input(7),
+            demiurge_input(8)
+   );
+   ESP_LOGI(tag, "Output: %2.1f, %2.1f",
+            demiurge_output(1),
+            demiurge_output(2)
+   );
+   ESP_LOGI(tag, "Extras: %2.1f, %2.1f, %2.1f, %2.1f, %2.1f, %2.1f, %2.1f, %2.1f",
+            signal->extra1,
+            signal->extra2,
+            signal->extra3,
+            signal->extra4,
+            signal->extra5,
+            signal->extra6,
+            signal->extra7,
+            signal->extra8
+   );
+#endif
+}
+
+float IRAM_ATTR demiurge_input(int number) {
+   configASSERT(number > 0 && number <= 8)
+   return _inputs[number - 1];
+}
+
+float IRAM_ATTR demiurge_output(int number) {
+   configASSERT(number > 0 && number <= DEMIURGE_MAX_SINKS)
+   return _outputs[number - 1];
+}
+
+static void IRAM_ATTR readGpio() {
+   _gpios = gpio_input_get() | (((uint64_t) gpio_input_get_high()) << 32);
+}
+
+void IRAM_ATTR demiurge_tick() {
+   gpio_set_level(GPIO_NUM_26, 1); // TP1 - Test Point to check timing
+   timerCounter = current_time();
+#ifdef DEMIURGE_TICK_TIMING
+   tick_interval = timerCounter - tick_start;
+   tick_start = timerCounter;
+#endif
+   // We are setting the outputs at the start of a cycle, to ensure that the interval is identical from cycle to cycle.
+   mcp4822_set(&_dac, (uint16_t) ((10.0f - _outputs[0]) * 204.8f), (uint16_t) ((10.0f - _outputs[1]) * 204.8f));
+
+   readGpio();
+   adc128s102_read(&_adc, _inputs);
+
+   for (int i=0 ; i < DEMIURGE_MAX_SINKS; i++ ) {
+      signal_t *sink = _sinks[i];
+      if (sink != NULL) {
+         sink->read_fn(sink, timerCounter);  // ignore return value
+      }
+   }
+#ifdef DEMIURGE_TICK_TIMING
+   if (tick_update > 200000) {
+      tick_duration = current_time() - tick_start;
+      tick_update = 0;
+   }
+   tick_update++;
+#endif
+   gpio_set_level(GPIO_NUM_26, 0); // TP1 - Test Point to check timing
+}
+
+static void demiurge_initialize() {
+   ESP_LOGI(TAG_DEMI, "Starting Demiurge...\n");
+   for (int i = 0; i < DEMIURGE_MAX_SINKS; i++)
+      _sinks[i] = NULL;
+   _started = false;
+   _gpios = 0;
+   for (int i=0 ; i < DEMIURGE_MAX_SINKS; i++ ) {
+      _sinks[i] = NULL;
+   }
+   initialize_time();
+   initialize_tick_timer(_ticks_per_second);
+   for (int i = 0; i < sizeof(gpio_output) / sizeof(gpio_num_t); i++) {
+      ESP_LOGI(TAG_SOUND, "Init GPIO%u", gpio_output[i]);
+      esp_err_t error = gpio_set_direction(gpio_output[i], GPIO_MODE_OUTPUT);
+      configASSERT(error == ESP_OK)
+      gpio_set_level(gpio_output[i], gpio_output_level[i]);
+   }
+   for (int i = 0; i < sizeof(gpio_input) / sizeof(gpio_num_t); i++) {
+      ESP_LOGI(TAG_SOUND, "Init GPIO%u", gpio_input[i]);
+      esp_err_t error = gpio_set_direction(gpio_input[i], GPIO_MODE_INPUT);
+      configASSERT(error == ESP_OK)
+   }
+   ESP_LOGI(TAG_SOUND, "Initialized GPIO done");
+
+   _dac.mosi_pin = GPIO_NUM_13;
+   _dac.sclk_pin = GPIO_NUM_14;
+   _dac.cs_pin = GPIO_NUM_15;
+   _dac.ldac_pin = GPIO_NUM_4;
+   _dac.spiHw = &SPI2;
+
+   _adc.spiHw = &SPI3;
+   _adc.mosi_pin = GPIO_NUM_23;
+   _adc.miso_pin = GPIO_NUM_19;
+   _adc.sclk_pin = GPIO_NUM_18;
+   _adc.cs_pin = GPIO_NUM_5;
+}
+
+// Called from the modified cpu_start.c in esp-idf/
+void demiurge_core1_task(void *param) {
+   if (_started)
+      return;
+   _started = true;
+   _ticks_per_second = (uint64_t) param;
+   _micros_per_tick = 1000000 / _ticks_per_second;
+   demiurge_initialize();
+   while (true) {
+      wait_timer_alarm();
+      demiurge_tick();
+   }
+}
+
+void demiurge_start(uint64_t sample_rate) {
+   xTaskCreatePinnedToCore(demiurge_core1_task, "realtime", 2048, (void *) sample_rate, 25, &task_handle, 1);
+}
+#undef TAG

@@ -31,20 +31,16 @@ See the License for the specific language governing permissions and
 #define DEMIURGE_ESP_ERR_SPI(x)        DEMIURGE_ESP_ERR(DEMIURGE_ESP_ERR_SPI_BASE, (x))
 #define DEMIURGE_ESP_ERR_SPI_HOST_ALREADY_IN_USE      DEMIURGE_ESP_ERR_SPI(4)
 
-class MCP4822
-{
-public:
-   MCP4822(gpio_num_t mosi_pin, gpio_num_t sclk_pin, gpio_num_t cs_pin);
-   virtual ~MCP4822();
 
-   void setOutput(int16_t output1, int16_t output2);
-
-   lldesc_t *out;
-private:
-   void initialize_spi(gpio_num_t mosi_pin, gpio_num_t sclk_pin);
-
+typedef struct {
+   gpio_num_t mosi_pin;
+   gpio_num_t sclk_pin;
+   gpio_num_t cs_pin;
+   gpio_num_t ldac_pin;
    spi_dev_t *spiHw;
-};
+} mcp4822_t;
 
+void mcp4822_initialize(mcp4822_t *dac);
+void mcp4822_set(mcp4822_t *dac, int16_t output1, int16_t output2);
 
 #endif

@@ -27,20 +27,16 @@ See the License for the specific language governing permissions and
 #define DEMIURGE_ESP_ERR_SPI(x)        DEMIURGE_ESP_ERR(DEMIURGE_ESP_ERR_SPI_BASE, (x))
 #define DEMIURGE_ESP_ERR_SPI_HOST_ALREADY_IN_USE      DEMIURGE_ESP_ERR_SPI(4)
 
-class ADC128S102
-{
-public:
-   ADC128S102(gpio_num_t mosi_pin, gpio_num_t miso_pin, gpio_num_t sclk_pin, gpio_num_t cs_pin);
-   virtual ~ADC128S102();
-
-   void read_inputs(float *ch );
-
-private:
+typedef struct {
    spi_dev_t *spiHw;
+   gpio_num_t mosi_pin;
+   gpio_num_t miso_pin;
+   gpio_num_t sclk_pin;
+   gpio_num_t cs_pin;
+} adc128s102_t;
 
-   lldesc_t *out;
+void adc128s102_initialize(adc128s102_t *adc);
 
-   lldesc_t *in;
-};
+void adc128s102_read(adc128s102_t *adc, float *ch);
 
 #endif

@@ -15,40 +15,38 @@
 #
 
 idf_component_register(
-    SRCS Adder.cpp
-        Adsr.cpp
-        AudioInPort.cpp
-        AudioOutPort.cpp
-        Averager.cpp
-        Calculator.cpp
-        Clipping.cpp
-        ControlPair.cpp
-        CvInPort.cpp
-        CvOutPort.cpp
-        Demiurge.cpp
-        FixedSignal.cpp
-        GateInPort.cpp
-        GateOutPort.cpp
-        Inverter.cpp
-        LED.cpp
-        Log.cpp
-        Log2.cpp
-        Log10.cpp
-        Mixer.cpp
-        Multiplier.cpp
-        OctavePerVolt.cpp
-        Oscillator.cpp
-        Pan.cpp
-        Passthru.cpp
-        Potentiometer.cpp
-        PushButton.cpp
-        Signal.cpp
-        Threshold.cpp
-        Volume.cpp
-        adc128s102/ADC128S102.cpp
-        mcp4822/MCP4822.cpp
-        tlv320/Tlv320aic3104.cpp
-        i2s/i2s_print.c
+    SRCS
+        adsr.c
+        audio_inport.c
+        audio_outport.c
+        averager.c
+        calculator.c
+        clipping.c
+        control_pair.c
+        cv_inport.c
+        cv_outport.c
+        demiurge.c
+        fixed_signal.c
+        gate_inport.c
+        gate_outport.c
+        inverter.c
+        led.c
+        lg.c
+        lg2.c
+        lg10.c
+        mixer.c
+        scale.c
+        octave_per_volt.c
+        offset.c
+        oscillator.c
+        pan.c
+        passthru.c
+        potentiometer.c
+        pushbutton.c
+        threshold.cpp
+        volume.c
+        adc128s102/ADC128S102.c
+        mcp4822/MCP4822.c
     INCLUDE_DIRS "."
 )
 
