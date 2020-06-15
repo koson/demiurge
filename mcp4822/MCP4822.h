@@ -41,6 +41,7 @@ typedef struct {
 } mcp4822_t;
 
 void mcp4822_initialize(mcp4822_t *dac);
+
 void mcp4822_set(mcp4822_t *dac, int16_t output1, int16_t output2);
 
 #endif

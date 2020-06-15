@@ -59,6 +59,8 @@ See the License for the specific language governing permissions and
         abort();                                                        \
         }
 
+uint64_t demiurge_current_time();
+
 void demiurge_start(uint64_t sample_rate);
 
 void demiurge_registerSink(signal_t *processor);

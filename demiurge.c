@@ -51,7 +51,7 @@ static adc128s102_t _adc;
 // Overrun increments means that the tick() took longer than the sample time.
 // If you see this happening, either decrease the sample rate or optimize the tick()
 // evaluation to take less time.
-static uint32_t overrun = 0;
+static uint32_t overrun = -3;  // 3 overruns happen during startup, and that is ok. Let's compensate for that.
 
 extern int _init_start;
 
@@ -64,7 +64,7 @@ static void initialize_time() {
    TIMERG0.hw_timer[1].config.enable = 1;
 }
 
-static uint64_t current_time() {
+uint64_t demiurge_current_time() {
    TIMERG0.hw_timer[1].update = 1;
    uint64_t lo = TIMERG0.hw_timer[1].cnt_low;
    uint64_t hi = TIMERG0.hw_timer[1].cnt_high;
@@ -190,8 +190,8 @@ static void IRAM_ATTR readGpio() {
 }
 
 void IRAM_ATTR demiurge_tick() {
-   gpio_set_level(GPIO_NUM_26, 1); // TP1 - Test Point to check timing
-   timer_counter = current_time();
+   gpio_set_level(GPIO_NUM_27, 1); // TP1 - Test Point to check timing
+   timer_counter = demiurge_current_time();
 #ifdef DEMIURGE_TICK_TIMING
    tick_interval = timer_counter - tick_start;
    tick_start = timer_counter;
@@ -209,12 +209,12 @@ void IRAM_ATTR demiurge_tick() {
    }
 #ifdef DEMIURGE_TICK_TIMING
    if (tick_update > 200000) {
-      tick_duration = current_time() - tick_start;
+      tick_duration = demiurge_current_time() - tick_start;
       tick_update = 0;
    }
    tick_update++;
 #endif
-   gpio_set_level(GPIO_NUM_26, 0); // TP1 - Test Point to check timing
+   gpio_set_level(GPIO_NUM_27, 0); // TP1 - Test Point to check timing
 }
 
 static void demiurge_initialize() {
