@@ -53,7 +53,7 @@ static void initialize_spi_clocks(spi_dev_t *spiHw) {
    {
       const double preDivider = 1.0;
       const double apbClockSpeedInHz = APB_CLK_FREQ;
-      const double apbDivider = (apbClockSpeedInHz / preDivider / 10000000);
+      const double apbDivider = (apbClockSpeedInHz / preDivider / 16000000);
 
       const int32_t clkdiv_pre = ((int32_t) preDivider) - 1;
       const int32_t clkcnt_n = ((int32_t) apbDivider) - 1;
@@ -118,17 +118,26 @@ static uint32_t ch7_0 = 0b00111000000000000000000000000000;
 
 void adc128s102_read(adc128s102_t *adc, float *ch) {
    // get previous cycle's data.
-   volatile uint32_t *buf = adc->spiHw->data_buf;
-   ch[3] = -(((buf[0] << 8) + buf[1]) / 204.8f - 10.0f);
-   ch[2] = -(((buf[2] << 8) + buf[3]) / 204.8f - 10.0f);
-   ch[1] = -(((buf[4] << 8) + buf[5]) / 204.8f - 10.0f);
-   ch[0] = -(((buf[6] << 8) + buf[7]) / 204.8f - 10.0f);
-   ch[7] = -(((buf[8] << 8) + buf[9]) / 204.8f - 10.0f);
-   ch[6] = -(((buf[10] << 8) + buf[11]) / 204.8f - 10.0f);
-   ch[5] = -(((buf[12] << 8) + buf[13]) / 204.8f - 10.0f);
-   ch[4] = -(((buf[14] << 8) + buf[15]) / 204.8f - 10.0f);
+   volatile uint32_t *d = adc->spiHw->data_buf;
+   uint32_t ch3 = d[0] >> 16;
+   uint32_t ch2 = d[0] & 0xFFFF;
+   uint32_t ch1 = d[1] >> 16;
+   uint32_t ch0 = d[1] & 0xFFFF;
+   uint32_t ch7 = d[2] >> 16;
+   uint32_t ch6 = d[2] & 0xFFFF;
+   uint32_t ch5 = d[3] >> 16;
+   uint32_t ch4 = d[3] & 0xFFFF;
+   ch[7] = -(ch7 / 204.8f - 10.0f);
+   ch[6] = -(ch6 / 204.8f - 10.0f);
+   ch[5] = -(ch5 / 204.8f - 10.0f);
+   ch[4] = -(ch4 / 204.8f - 10.0f);
+   ch[3] = -(ch3 / 204.8f - 10.0f);
+   ch[2] = -(ch2 / 204.8f - 10.0f);
+   ch[1] = -(ch1 / 204.8f - 10.0f);
+   ch[0] = -(ch0 / 204.8f - 10.0f);
 
    // Set up next read cycle.
+   volatile uint32_t *buf = adc->spiHw->data_buf;
    buf[0] = ch1_2;
    buf[1] = ch3_4;
    buf[2] = ch5_6;
