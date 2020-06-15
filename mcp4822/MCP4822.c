@@ -14,9 +14,7 @@ See the License for the specific language governing permissions and
       limitations under the License.
 */
 
-#include <string.h>
 #include <driver/ledc.h>
-#include <driver/mcpwm.h>
 #include <driver/periph_ctrl.h>
 #include "driver/spi_master.h"
 #include <soc/mcpwm_struct.h>
@@ -105,6 +103,7 @@ void mcp4822_initialize(mcp4822_t *dac) {
    dac->spiHw->mosi_dlen.usr_mosi_dbitlen = 31;
    dac->spiHw->user.usr_mosi = 1;
    initialize_spi_clocks(dac->spiHw);
+   ESP_LOGI(TAG, "DAC Initialized");
 }
 
 void mcp4822_set(mcp4822_t *dac, int16_t out1, int16_t out2) {

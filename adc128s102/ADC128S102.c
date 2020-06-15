@@ -107,6 +107,7 @@ void adc128s102_initialize(adc128s102_t *adc) {
    adc->spiHw->user1.usr_dummy_cyclelen = 0;
    adc->spiHw->user2.usr_command_bitlen = 0;
    initialize_spi_clocks(adc->spiHw);
+   ESP_LOGI(TAG, "ADC Initialized");
 }
 
 //                        01234567012345670123456701234567

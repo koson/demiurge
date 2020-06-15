@@ -24,14 +24,15 @@ void cv_outport_init(cv_outport_t *handle, int position) {
    handle->me.read_fn = cv_outport_read;
    handle->me.data = handle;
    handle->position = position;
+   handle->registered = false;
 }
 
 void cv_outport_configure_input(cv_outport_t  *handle, signal_t *input) {
+   handle->input = input;
    if (!handle->registered){
       demiurge_registerSink(&handle->me);
       handle->registered = true;
    }
-   handle->input = input;
 }
 
 float IRAM_ATTR cv_outport_read(signal_t *handle, uint64_t time) {

@@ -24,14 +24,15 @@ void gate_outport_init(gate_outport_t *handle, int position) {
    handle->me.read_fn = gate_outport_read;
    handle->me.data = handle;
    handle->position = position;
+   handle->registered = false;
 }
 
 void gate_outport_configure_input(gate_outport_t *handle, signal_t *input) {
+   handle->input = input;
    if (!handle->registered){
       demiurge_registerSink(&handle->me);
       handle->registered = true;
    }
-   handle->input = input;
 }
 
 float IRAM_ATTR gate_outport_read(signal_t *handle, uint64_t time) {

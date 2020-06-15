@@ -15,17 +15,18 @@ See the License for the specific language governing permissions and
 */
 
 #include <esp_log.h>
-#include <esp_task_wdt.h>
 #include <soc/timer_group_reg.h>
 #include <driver/ledc.h>
 #include <mcp4822/MCP4822.h>
 #include <soc/timer_periph.h>
 #include <esp32/dport_access.h>
 #include <adc128s102/ADC128S102.h>
+#include <soc/dport_reg.h>
+#include <esp32/cache_err_int.h>
+#include <esp32/rom/cache.h>
 #include "demiurge.h"
 
-#define TAG_SOUND "SOUND"
-#define TAG_DEMI "DEMI"
+#define TAG "SOUND"
 
 static gpio_num_t gpio_output[] = {GPIO_NUM_21, GPIO_NUM_22, GPIO_NUM_25, GPIO_NUM_26, GPIO_NUM_33, GPIO_NUM_27};
 static uint32_t gpio_output_level[] = {1, 1, 1, 1, 0, 0};
@@ -33,16 +34,15 @@ static gpio_num_t gpio_input[] = {GPIO_NUM_32, GPIO_NUM_36, GPIO_NUM_37, GPIO_NU
 static uint64_t nanos_per_tick;
 
 static uint32_t _ticks_per_second;
-static uint32_t _micros_per_tick = 0;
 static uint64_t _gpios;
 static bool _started;
-static uint64_t timerCounter = 0;
+static uint64_t timer_counter = 0;
 static volatile uint64_t tick_start = 0;
 static volatile uint64_t tick_duration = 0;
 static volatile uint64_t tick_interval = 0;
-static TaskHandle_t task_handle;
+static bool app_cpu_started = false;
 
-signal_t *_sinks[DEMIURGE_MAX_SINKS];
+static volatile signal_t *_sinks[DEMIURGE_MAX_SINKS];
 float _inputs[8] = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
 float _outputs[2] = {0.0f, 0.0f};
 static mcp4822_t _dac;
@@ -52,8 +52,8 @@ static adc128s102_t _adc;
 // If you see this happening, either decrease the sample rate or optimize the tick()
 // evaluation to take less time.
 static uint32_t overrun = 0;
-static uint64_t next = 0;
-static uint64_t demi_now;
+
+extern int _init_start;
 
 static void initialize_time() {
    // Initialize timer used for timing
@@ -85,7 +85,7 @@ static void IRAM_ATTR initialize_tick_timer(int ticks_per_second) {
    TIMERG0.hw_timer[0].alarm_low = (nanos_per_tick * 40) / 1000 - 1; // 40 ticks per microsecond
    TIMERG0.hw_timer[0].reload = 1;
    TIMERG0.hw_timer[0].config.enable = 1;
-   ESP_LOGI(TAG_SOUND, "Microseconds/tick: %d", TIMERG0.hw_timer[0].alarm_low);
+   ESP_EARLY_LOGI(TAG, "Microseconds/tick: %d", TIMERG0.hw_timer[0].alarm_low);
 }
 
 
@@ -96,30 +96,30 @@ static void IRAM_ATTR wait_timer_alarm() {
    while (TIMERG0.hw_timer[0].config.alarm_en) {
       counter++;
    }
-   if (counter > 0)
+   if (counter == 0)
       overrun++;
    TIMERG0.hw_timer[0].config.alarm_en = 1;
 }
 
 void demiurge_registerSink(signal_t *processor) {
-   ESP_LOGI(TAG_SOUND, "Registering Sink: %p", (void *) processor);
+   ESP_EARLY_LOGI(TAG, "Registering Sink: %p", (void *) processor);
    configASSERT(processor != NULL)
    for (int i = 0; i < DEMIURGE_MAX_SINKS; i++) {
       if (_sinks[i] == NULL) {
          _sinks[i] = processor;
-         ESP_LOGI(TAG_SOUND, "Registering Sink: %d", i);
+         ESP_EARLY_LOGI(TAG, "Registering Sink: %d", i);
          break;
       }
    }
 }
 
 void demiurge_unregisterSink(signal_t *processor) {
-   ESP_LOGI(TAG_SOUND, "Unregistering Sink: %p", (void *) processor);
+   ESP_EARLY_LOGI(TAG, "Unregistering Sink: %p", (void *) processor);
    configASSERT(processor != NULL)
    for (int i = 0; i < DEMIURGE_MAX_SINKS; i++) {
       if (_sinks[i] == processor) {
          _sinks[i] = NULL;
-         ESP_LOGI(TAG_SOUND, "Unregistering Sink: %d, %p", i, (void *) processor);
+         ESP_EARLY_LOGI(TAG, "Unregistering Sink: %d, %p", i, (void *) processor);
          break;
       }
    }
@@ -142,8 +142,8 @@ void IRAM_ATTR demiurge_set_output(int number, float value) {
 void IRAM_ATTR demiurge_print_overview(const char *tag, signal_t *signal) {
 #ifndef CONFIG_ESP_CONSOLE_UART_NONE
 #ifdef DEMIURGE_TICK_TIMING
-   ESP_LOGI("TICK", "interval=%lld, duration=%lld, start=%lld, now=%lld, next=%lld",
-            tick_interval, tick_duration, tick_start, demi_now, next);
+   ESP_LOGI("TICK", "interval=%lld, duration=%lld, start=%lld, overrun=%d",
+            tick_interval, tick_duration, tick_start, overrun);
 #endif
    ESP_LOGI(tag, "Input: %2.1f, %2.1f, %2.1f, %2.1f, %2.1f, %2.1f, %2.1f, %2.1f",
             demiurge_input(1),
@@ -159,7 +159,8 @@ void IRAM_ATTR demiurge_print_overview(const char *tag, signal_t *signal) {
             demiurge_output(1),
             demiurge_output(2)
    );
-   ESP_LOGI(tag, "Extras: %2.1f, %2.1f, %2.1f, %2.1f, %2.1f, %2.1f, %2.1f, %2.1f",
+   ESP_LOGI(tag, "Extras: [%lld] - %2.1f, %2.1f, %2.1f, %2.1f, %2.1f, %2.1f, %2.1f, %2.1f, %2.1f",
+            signal->last_calc,
             signal->extra1,
             signal->extra2,
             signal->extra3,
@@ -167,7 +168,9 @@ void IRAM_ATTR demiurge_print_overview(const char *tag, signal_t *signal) {
             signal->extra5,
             signal->extra6,
             signal->extra7,
-            signal->extra8
+            signal->extra8,
+            signal->cached
+
    );
 #endif
 }
@@ -188,21 +191,20 @@ static void IRAM_ATTR readGpio() {
 
 void IRAM_ATTR demiurge_tick() {
    gpio_set_level(GPIO_NUM_26, 1); // TP1 - Test Point to check timing
-   timerCounter = current_time();
+   timer_counter = current_time();
 #ifdef DEMIURGE_TICK_TIMING
-   tick_interval = timerCounter - tick_start;
-   tick_start = timerCounter;
+   tick_interval = timer_counter - tick_start;
+   tick_start = timer_counter;
 #endif
    // We are setting the outputs at the start of a cycle, to ensure that the interval is identical from cycle to cycle.
    mcp4822_set(&_dac, (uint16_t) ((10.0f - _outputs[0]) * 204.8f), (uint16_t) ((10.0f - _outputs[1]) * 204.8f));
 
    readGpio();
    adc128s102_read(&_adc, _inputs);
-
-   for (int i=0 ; i < DEMIURGE_MAX_SINKS; i++ ) {
+   for (int i = 0; i < DEMIURGE_MAX_SINKS; i++) {
       signal_t *sink = _sinks[i];
       if (sink != NULL) {
-         sink->read_fn(sink, timerCounter);  // ignore return value
+         sink->read_fn(sink, timer_counter);  // ignore return value
       }
    }
 #ifdef DEMIURGE_TICK_TIMING
@@ -216,28 +218,28 @@ void IRAM_ATTR demiurge_tick() {
 }
 
 static void demiurge_initialize() {
-   ESP_LOGI(TAG_DEMI, "Starting Demiurge...\n");
+   ESP_EARLY_LOGI(TAG, "Starting Demiurge...\n");
    for (int i = 0; i < DEMIURGE_MAX_SINKS; i++)
       _sinks[i] = NULL;
    _started = false;
    _gpios = 0;
-   for (int i=0 ; i < DEMIURGE_MAX_SINKS; i++ ) {
+   for (int i = 0; i < DEMIURGE_MAX_SINKS; i++) {
       _sinks[i] = NULL;
    }
    initialize_time();
    initialize_tick_timer(_ticks_per_second);
    for (int i = 0; i < sizeof(gpio_output) / sizeof(gpio_num_t); i++) {
-      ESP_LOGI(TAG_SOUND, "Init GPIO%u", gpio_output[i]);
+      ESP_EARLY_LOGI(TAG, "Init GPIO%u", gpio_output[i]);
       esp_err_t error = gpio_set_direction(gpio_output[i], GPIO_MODE_OUTPUT);
       configASSERT(error == ESP_OK)
       gpio_set_level(gpio_output[i], gpio_output_level[i]);
    }
    for (int i = 0; i < sizeof(gpio_input) / sizeof(gpio_num_t); i++) {
-      ESP_LOGI(TAG_SOUND, "Init GPIO%u", gpio_input[i]);
+      ESP_EARLY_LOGI(TAG, "Init GPIO%u", gpio_input[i]);
       esp_err_t error = gpio_set_direction(gpio_input[i], GPIO_MODE_INPUT);
       configASSERT(error == ESP_OK)
    }
-   ESP_LOGI(TAG_SOUND, "Initialized GPIO done");
+   ESP_EARLY_LOGI(TAG, "Initialized GPIO done");
 
    _dac.mosi_pin = GPIO_NUM_13;
    _dac.sclk_pin = GPIO_NUM_14;
@@ -250,23 +252,65 @@ static void demiurge_initialize() {
    _adc.miso_pin = GPIO_NUM_19;
    _adc.sclk_pin = GPIO_NUM_18;
    _adc.cs_pin = GPIO_NUM_5;
+   mcp4822_initialize(&_dac);
+   adc128s102_initialize(&_adc);
 }
 
-// Called from the modified cpu_start.c in esp-idf/
-void demiurge_core1_task(void *param) {
+void demiurge_core1_task() {
    if (_started)
       return;
    _started = true;
-   _ticks_per_second = (uint64_t) param;
-   _micros_per_tick = 1000000 / _ticks_per_second;
-   demiurge_initialize();
    while (true) {
       wait_timer_alarm();
       demiurge_tick();
    }
 }
 
-void demiurge_start(uint64_t sample_rate) {
-   xTaskCreatePinnedToCore(demiurge_core1_task, "realtime", 2048, (void *) sample_rate, 25, &task_handle, 1);
+void start_cpu1(void) {
+   esp_cache_err_int_init();
+   ESP_EARLY_LOGI(TAG, "Starting Demiurge on APP CPU: %d", xPortGetCoreID());
+   app_cpu_started = true;
+   demiurge_core1_task();
+   abort(); /* Only get to here if Demiurge platform is somehow very broken */
 }
+
+static void wdt_reset_cpu1_info_enable(void) {
+   DPORT_REG_SET_BIT(DPORT_APP_CPU_RECORD_CTRL_REG, DPORT_APP_CPU_PDEBUG_ENABLE | DPORT_APP_CPU_RECORD_ENABLE);
+   DPORT_REG_CLR_BIT(DPORT_APP_CPU_RECORD_CTRL_REG, DPORT_APP_CPU_RECORD_ENABLE);
+}
+
+void IRAM_ATTR call_start_cpu1(void) {
+   asm volatile (\
+                  "wsr    %0, vecbase\n" \
+                  ::"r"(&_init_start));
+
+   ets_set_appcpu_boot_addr(0);
+   cpu_configure_region_protection();
+   cpu_init_memctl();
+
+   wdt_reset_cpu1_info_enable();
+   ESP_EARLY_LOGI(TAG, "APP CPU up: %d", xPortGetCoreID());
+   start_cpu1();
+}
+
+void demiurge_start(uint64_t sample_rate) {
+   _ticks_per_second = sample_rate;
+   demiurge_initialize();
+   //Flush and enable icache for APP CPU
+   Cache_Flush(1);
+   Cache_Read_Enable(1);
+   esp_cpu_unstall(1);
+   if (!DPORT_GET_PERI_REG_MASK(DPORT_APPCPU_CTRL_B_REG, DPORT_APPCPU_CLKGATE_EN)) {
+      DPORT_SET_PERI_REG_MASK(DPORT_APPCPU_CTRL_B_REG, DPORT_APPCPU_CLKGATE_EN);
+      DPORT_CLEAR_PERI_REG_MASK(DPORT_APPCPU_CTRL_C_REG, DPORT_APPCPU_RUNSTALL);
+      DPORT_SET_PERI_REG_MASK(DPORT_APPCPU_CTRL_A_REG, DPORT_APPCPU_RESETTING);
+      DPORT_CLEAR_PERI_REG_MASK(DPORT_APPCPU_CTRL_A_REG, DPORT_APPCPU_RESETTING);
+   }
+   ets_set_appcpu_boot_addr((uint32_t) call_start_cpu1);
+   while (!app_cpu_started) {
+      ets_delay_us(100);
+   }
+   ESP_LOGI(TAG, "Demiurge Started.");
+}
+
 #undef TAG

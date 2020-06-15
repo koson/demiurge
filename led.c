@@ -31,6 +31,7 @@ void led_init(led_t *handle, int position) {
    configASSERT(position > 0 && position <= 4)
    handle->me.read_fn = led_read;
    handle->me.data = handle;
+   handle->registered = false;
    handle->channel = LED_CHANNEL[position - 1];
    handle->input = NULL;
    handle->fade = NULL;
@@ -64,11 +65,11 @@ void led_init(led_t *handle, int position) {
 }
 
 void led_configure_input(led_t *handle, signal_t *input) {
+   handle->input = input;
    if (!handle->registered) {
       demiurge_registerSink(&handle->me);
       handle->registered = true;
    }
-   handle->input = input;
 }
 
 void led_configure_fade(led_t *handle, signal_t *fade) {

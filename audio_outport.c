@@ -24,20 +24,21 @@ void audio_outport_init(audio_outport_t *handle, int position) {
    handle->me.read_fn = audio_outport_read;
    handle->me.data = handle;
    handle->position = position;
+   handle->registered = false;
 }
 
 void audio_outport_configure_input(audio_outport_t *handle, signal_t *input) {
+   handle->input = input;
    if (!handle->registered) {
       demiurge_registerSink(&handle->me);
       handle->registered = true;
    }
-   handle->input = input;
 }
 
 float IRAM_ATTR audio_outport_read(signal_t *handle, uint64_t time) {
-   audio_outport_t *port = (audio_outport_t *) handle->data;
    if (time > handle->last_calc) {
       handle->last_calc = time;
+      audio_outport_t *port = (audio_outport_t *) handle->data;
       signal_t *upstream = port->input;
       signal_fn fn = upstream->read_fn;
       float raw = fn(upstream, time);
