@@ -22,11 +22,9 @@ See the License for the specific language governing permissions and
 
 
 float IRAM_ATTR octave_frequencyOf(float voltage) {
-   double scale = pow(2, voltage);
-   return (440.0 / TWO_POWER_OF_2_75) * scale;
+   return 27.5 * pow(2, voltage);
 }
 
 float IRAM_ATTR octave_voltageOf(float frequency) {
-   // TODO:
-   return 1;
+   return log2f(frequency / 27.5);
 }

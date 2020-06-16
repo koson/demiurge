@@ -23,6 +23,7 @@ See the License for the specific language governing permissions and
 void cv_inport_init(cv_inport_t *handle, int position){
    configASSERT(position > 0 && position <= 4)
    handle->me.read_fn = cv_inport_read;
+   handle->me.data = handle;
    handle->position = position + DEMIURGE_CVINPUT_OFFSET;
 }
 
