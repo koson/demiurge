@@ -14,16 +14,16 @@ See the License for the specific language governing permissions and
       limitations under the License.
 */
 
-#include <esp_system.h>
-#include <esp_log.h>
+#include "clipping.h"
 #include "fixed_signal.h"
 
 void fixed_signal_init(fixed_signal_t *handle, float value) {
    handle->me.read_fn = fixed_signal_read;
    handle->me.data = handle;
+   handle->me.post_fn = clip_none;
    handle->me.extra1 = value;
 }
 
 float IRAM_ATTR fixed_signal_read(signal_t *handle, uint64_t time) {
-   return handle->extra1;
+   return handle->post_fn(handle->extra1);
 }

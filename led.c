@@ -15,7 +15,6 @@ See the License for the specific language governing permissions and
 */
 
 #include <driver/ledc.h>
-#include <esp_task.h>
 #include <esp_log.h>
 #include "led.h"
 #include "demiurge.h"
@@ -31,6 +30,7 @@ void led_init(led_t *handle, int position) {
    configASSERT(position > 0 && position <= 4)
    handle->me.read_fn = led_read;
    handle->me.data = handle;
+   handle->me.post_fn = clip_none;
    handle->registered = false;
    handle->channel = LED_CHANNEL[position - 1];
    handle->input = NULL;
@@ -90,7 +90,7 @@ float IRAM_ATTR led_read(signal_t *handle, uint64_t time) {
    if (time > handle->last_calc) {
       handle->last_calc = time;
       signal_t *upstream = led->input;
-      float result = upstream->read_fn(upstream, time);
+      float result = handle->post_fn(upstream->read_fn(upstream, time));
 
 // TODO: Fix the dynamic LEDs
 //      uint32_t duty = (uint32_t) (result * 819.0f);

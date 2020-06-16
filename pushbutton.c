@@ -14,9 +14,6 @@ See the License for the specific language governing permissions and
       limitations under the License.
 */
 
-#include <freertos/FreeRTOS.h>
-#include <esp_system.h>
-#include <esp_log.h>
 #include "pushbutton.h"
 #include "demiurge.h"
 
@@ -24,13 +21,14 @@ void pushbutton_init(pushbutton_t *handle, int position) {
    configASSERT(position > 0 && position <= 4 )
    handle->me.read_fn = pushbutton_read;
    handle->me.data = handle;
+   handle->me.post_fn = clip_gate;
    handle->position = position + DEMIURGE_PUSHBUTTON_OFFSET;
 }
 
 float IRAM_ATTR pushbutton_read(signal_t *handle, uint64_t time) {
    if( time > handle->last_calc ){
       pushbutton_t *button = (pushbutton_t *) handle->data;
-      float result = demiurge_gpio(button->position);
+      float result = handle->post_fn(demiurge_gpio(button->position));
       handle->cached = result;
       return result;
    }

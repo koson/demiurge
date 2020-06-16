@@ -23,6 +23,7 @@ void cv_outport_init(cv_outport_t *handle, int position) {
    configASSERT(position > 0 && position <= 2)
    handle->me.read_fn = cv_outport_read;
    handle->me.data = handle;
+   handle->me.post_fn = clip_cv;
    handle->position = position;
    handle->registered = false;
 }
@@ -41,7 +42,7 @@ float IRAM_ATTR cv_outport_read(signal_t *handle, uint64_t time) {
       handle->last_calc = time;
       signal_t *upstream = port->input;
       signal_fn fn = upstream->read_fn;
-      float result = clipCV(fn(upstream, time));
+      float result = handle->post_fn(fn(upstream, time));
       handle->cached = result;
       return result;
    }

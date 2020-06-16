@@ -14,14 +14,14 @@ See the License for the specific language governing permissions and
       limitations under the License.
 */
 
-#include <esp_system.h>
-#include <esp_log.h>
+#include "clipping.h"
 #include "scale.h"
 #include "signal.h"
 
 void scale_init(scale_t *handle) {
    handle->me.read_fn = scale_read;
    handle->me.data = handle;
+   handle->me.post_fn = clip_none;
    handle->scale = 1.0;
    handle->scale_control = NULL;
 }
@@ -52,6 +52,7 @@ float IRAM_ATTR scale_read(signal_t *handle, uint64_t time) {
       } else {
          new_output = input * scale->scale;
       }
+      new_output = handle->post_fn(new_output);
       handle->cached = new_output;
       return new_output;
    }

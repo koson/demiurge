@@ -14,14 +14,14 @@ See the License for the specific language governing permissions and
       limitations under the License.
 */
 
-#include <esp_system.h>
-#include <esp_log.h>
 #include "inverter.h"
+#include "clipping.h"
 
 
 void inverter_init(inverter_t *handle) {
    handle->me.read_fn = inverter_read;
    handle->me.data = handle;
+   handle->me.post_fn = clip_none;
    handle->midpoint = NULL;
    handle->input = NULL;
    handle->scale = NULL;
@@ -56,6 +56,7 @@ float IRAM_ATTR inverter_read(signal_t *handle, uint64_t time) {
       if (scaleSignal != NULL) {
          out = out * scaleSignal->read_fn(scaleSignal, time);
       }
+      out = handle->post_fn(out);
       handle->cached = out;
       return out;
    }

@@ -14,9 +14,6 @@ See the License for the specific language governing permissions and
       limitations under the License.
 */
 
-#include <freertos/FreeRTOS.h>
-#include <esp_log.h>
-#include <driver/gpio.h>
 #include "clipping.h"
 #include "gate_inport.h"
 #include "demiurge.h"
@@ -25,6 +22,7 @@ void gate_inport_init(gate_inport_t *handle, int position) {
    configASSERT(position >= 0 && position <= 4 )
    handle->me.read_fn = gate_inport_read;
    handle->me.data = handle;
+   handle->me.post_fn = clip_gate;
 }
 
 float IRAM_ATTR gate_inport_read(signal_t *handle, uint64_t time){
@@ -36,7 +34,7 @@ float IRAM_ATTR gate_inport_read(signal_t *handle, uint64_t time){
       float result;
       if( port->position ) {
          float input = demiurge_input(port->position);
-         result = clipGate(input);
+         result = handle->post_fn(input);
       }
       else {
          bool state = demiurge_gpio(32);

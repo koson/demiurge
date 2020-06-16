@@ -23,26 +23,34 @@ See the License for the specific language governing permissions and
 void adsr_init(adsr_t *handle) {
    handle->me.read_fn = adsr_read;
    handle->me.data = handle;
-   handle-> stateMachine = 0;
+   handle->me.post_fn = clip_none;
+   handle->stateMachine = 0;
    handle->doneAt = 0;
    handle->startedAt = 0;
+   threshold_init(&handle->trigThreshold,0x2000, 0x800);
+   threshold_init(&handle->gateThreshold,0x2000, 0x800);
 }
 
 void adsr_configure_gate(adsr_t *handle, signal_t *control) {
    handle->gate = control;
 }
+
 void adsr_configure_attack(adsr_t *handle, signal_t *control) {
    handle->attack = control;
 }
+
 void adsr_configure_decay(adsr_t *handle, signal_t *control) {
    handle->decay = control;
 }
+
 void adsr_configure_sustain(adsr_t *handle, signal_t *control) {
    handle->sustain = control;
 }
+
 void adsr_configure_release(adsr_t *handle, signal_t *control) {
    handle->release = control;
 }
+
 void adsr_configure_trig(adsr_t *handle, signal_t *control) {
    handle->trig = control;
 }
@@ -56,9 +64,9 @@ float IRAM_ATTR adsr_slopeTime(float voltage) {
 }
 
 // TODO: without floating point, this code becomes VERY different, so let's postpone that/
-float IRAM_ATTR adsr_read(signal_t *handle, uint64_t time){
-   adsr_t *adsr = (adsr_t *)handle->data;
-   if( time > handle->last_calc) {
+float IRAM_ATTR adsr_read(signal_t *handle, uint64_t time) {
+   adsr_t *adsr = (adsr_t *) handle->data;
+   if (time > handle->last_calc) {
       handle->last_calc = time;
       float output;
 
@@ -122,12 +130,10 @@ float IRAM_ATTR adsr_read(signal_t *handle, uint64_t time){
       }
       adsr->currentGate = gateIn;
 
-      float result = clipAudio(output);
-      handle->cached = result;
-      handle->extra3 = result;
+      output = handle->post_fn(output);
+      handle->cached = output;
       handle->extra4 = adsr->stateMachine;
-
-      return result;
+      return output;
    }
    return handle->cached;
 }

@@ -14,22 +14,25 @@ See the License for the specific language governing permissions and
       limitations under the License.
 */
 
-#include <freertos/FreeRTOS.h>
-#include "esp_log.h"
+#include "demi_asserts.h"
+#include "clipping.h"
 #include "pan.h"
 
 
 void pan_init(pan_t *handle){
-   handle->me.read_fn = NULL;
+   handle->me.read_fn = pan_read;
    handle->me.data = handle;
+   handle->me.post_fn = clip_none;
    handle->left.hostInput = &handle->me;
    handle->right.hostInput = &handle->me;
 
    handle->left.me.read_fn = panchannel_read;
    handle->left.me.data = &handle->left;
+   handle->left.me.post_fn = clip_none;
    handle->left.factor = 0.5;
    handle->right.me.read_fn = panchannel_read;
    handle->right.me.data = &handle->right;
+   handle->right.me.post_fn = clip_none;
    handle->right.factor = -0.5;
 }
 
@@ -39,16 +42,33 @@ void pan_configure_control(pan_t *handle, signal_t *control) {
    handle->right.control = control;
 }
 
-float IRAM_ATTR panchannel_read(signal_t *handle, uint64_t time) {
-   panchannel_t *panchannel = (panchannel_t *) handle->data;
+void pan_configure_input(pan_t *handle, signal_t *input) {
+   configASSERT(input != NULL)
+   handle->input = input;
+}
+
+float IRAM_ATTR pan_read(signal_t *handle, uint64_t time) {
    if (time > handle->last_calc) {
       handle->last_calc = time;
+      pan_t *pan = (pan_t *) handle->data;
+      signal_t *input = pan->input;
+      float result = handle->post_fn(input->read_fn(input, time) );
+      handle->cached = result;
+      return result;
+   }
+   return handle->cached;
+}
+
+float IRAM_ATTR panchannel_read(signal_t *handle, uint64_t time) {
+   if (time > handle->last_calc) {
+      handle->last_calc = time;
+      panchannel_t *panchannel = (panchannel_t *) handle->data;
       signal_t *panControl = panchannel->control;
       float control = panControl->read_fn(panControl, time);
       signal_t *hostInput = panchannel->hostInput;
       float input = hostInput->read_fn(hostInput, time);
       input = input * control;
-      float result = input * panchannel->factor;
+      float result = handle->post_fn(input * panchannel->factor);
       handle->cached = result;
       return result;
    }

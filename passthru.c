@@ -14,13 +14,13 @@ See the License for the specific language governing permissions and
       limitations under the License.
 */
 
-#include <esp_system.h>
-#include <esp_log.h>
 #include "passthru.h"
+#include "clipping.h"
 
 void passthru_init(passthru_t *handle){
    handle->me.read_fn = passthru_read;
    handle->me.data = handle;
+   handle->me.post_fn = clip_none;
 }
 
 void passthru_configure_input(passthru_t  *handle, signal_t *input) {
@@ -31,7 +31,7 @@ float IRAM_ATTR passthru_read(signal_t *handle, uint64_t time) {
    if (time > handle->last_calc) {
       handle->last_calc = time;
       passthru_t *passthru = (passthru_t *) handle->data;
-      float input = passthru->input->read_fn(passthru->input, time);
+      float input = handle->post_fn(passthru->input->read_fn(passthru->input, time));
       handle->cached = input;
       return input;
    }

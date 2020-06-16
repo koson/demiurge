@@ -14,15 +14,15 @@ See the License for the specific language governing permissions and
       limitations under the License.
 */
 
-#include <esp_system.h>
-#include <esp_log.h>
 #include "offset.h"
+#include "clipping.h"
 #include "signal.h"
 
 
 void offset_init(offset_t *handle) {
    handle->me.read_fn = offset_read;
    handle->me.data = handle;
+   handle->me.post_fn = clip_none;
    handle->offset = 0;
    handle->offset_control = NULL;
    handle->input = NULL;
@@ -50,9 +50,9 @@ float IRAM_ATTR offset_read(signal_t *handle, uint64_t time){
 
       if (offset->offset_control != NULL) {
          float new_offset = handle->read_fn(handle, time);
-         new_output = input + new_offset;
+         new_output = handle->post_fn(input + new_offset);
       } else {
-         new_output = input + offset->offset;
+         new_output = handle->post_fn(input + offset->offset);
       }
       handle->cached = new_output;
       return new_output;

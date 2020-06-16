@@ -18,11 +18,13 @@ See the License for the specific language governing permissions and
 #include <esp_log.h>
 #include "calculator.h"
 #include "signal.h"
+#include "clipping.h"
 
 
 void calculator_init(calculator_t *handle) {
    handle->me.read_fn = calculator_read;
    handle->me.data = handle;
+   handle->me.post_fn = clip_none;
 }
 
 void calculator_configure_input(calculator_t *handle, signal_t *input) {
@@ -38,7 +40,7 @@ float IRAM_ATTR calculator_read(signal_t *handle, uint64_t time){
       handle->last_calc = time;
       calculator_t *calculator = (calculator_t *) handle->data;
       float input = calculator->input->read_fn(calculator->input, time);
-      float new_output = calculator->calc_fn(input);
+      float new_output = handle->post_fn(calculator->calc_fn(input));
       handle->cached = new_output;
       return new_output;
    }

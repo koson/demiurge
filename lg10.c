@@ -14,15 +14,15 @@ See the License for the specific language governing permissions and
       limitations under the License.
 */
 
-#include <esp_system.h>
-#include <esp_log.h>
 #include <math.h>
 #include "lg10.h"
 #include "signal.h"
+#include "clipping.h"
 
 void lg10_init(lg10_t *handle) {
    handle->me.read_fn = lg10_read;
    handle->me.data = handle;
+   handle->me.post_fn = clip_none;
 }
 
 void lg10_configure_input(lg10_t *handle, signal_t *input) {
@@ -34,7 +34,7 @@ float IRAM_ATTR lg10_read(signal_t *handle, uint64_t time) {
       handle->last_calc = time;
       lg10_t *lg10 = (lg10_t *) handle->data;
       float input = lg10->input->read_fn(lg10->input, time);
-      float new_output = log10f(input);
+      float new_output = handle->post_fn(log10f(input));
       handle->cached = new_output;
       return new_output;
    }

@@ -23,6 +23,7 @@ void audio_outport_init(audio_outport_t *handle, int position) {
    configASSERT(position > 0 && position <= 2)
    handle->me.read_fn = audio_outport_read;
    handle->me.data = handle;
+   handle->me.post_fn = clip_audio;
    handle->position = position;
    handle->registered = false;
 }
@@ -42,7 +43,7 @@ float IRAM_ATTR audio_outport_read(signal_t *handle, uint64_t time) {
       signal_t *upstream = port->input;
       signal_fn fn = upstream->read_fn;
       float raw = fn(upstream, time);
-      float result = clipAudio(raw);
+      float result = handle->post_fn(raw);
       handle->extra1 = raw;
       handle->extra2 = result;
       demiurge_set_output(port->position, result);

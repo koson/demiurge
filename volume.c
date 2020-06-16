@@ -14,14 +14,14 @@ See the License for the specific language governing permissions and
       limitations under the License.
 */
 
-#include <esp_system.h>
-#include <esp_task.h>
-#include <esp_log.h>
+#include "clipping.h"
+#include "demi_asserts.h"
 #include "volume.h"
 
 void volume_init(volume_t *handle) {
    handle->me.read_fn = volume_read;
    handle->me.data = handle;
+   handle->me.post_fn = clip_none;
 }
 
 void volume_configure(volume_t *handle, signal_t *input, signal_t *control) {
@@ -44,10 +44,12 @@ float IRAM_ATTR volume_read(signal_t *handle, uint64_t time) {
    if (time > handle->last_calc) {
       handle->last_calc = time;
       volume_t *vol = (volume_t *) handle->data;
-      float control = vol->control->read_fn(vol->control, time);
-      float in = vol->input->read_fn(vol->input, time);
-      float factor = 0.05 * control + 0.5;
-      float result = in * factor;
+      signal_t *ctrl = vol->control;
+      float gain = ctrl->read_fn(ctrl, time);
+      signal_t *input = vol->input;
+      float in = input->read_fn(input, time);
+      float factor = 0.05 * gain + 0.5;
+      float result = handle->post_fn(in * factor);
       handle->cached = result;
       return result;
    }

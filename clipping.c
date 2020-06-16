@@ -16,18 +16,22 @@ See the License for the specific language governing permissions and
 
 #include "demiurge.h"
 
-float IRAM_ATTR clipGate(float value) {
+float IRAM_ATTR clip_none(float value) {
+   return value;
+}
+
+float IRAM_ATTR clip_gate(float value) {
    if (value >= 0.5) return 10.0;
    return -10.0;
 }
 
-float IRAM_ATTR clipCV(float value) {
+float IRAM_ATTR clip_cv(float value) {
    if (value >= 10.0) return 10.0;
    if (value <= -10.0) return -10.0;
    return value;
 }
 
-float IRAM_ATTR clipAudio(float value) {
+float IRAM_ATTR clip_audio(float value) {
    if (value >= 10.0) return 10.0;
    if (value <= -10.0) return -10.0;
    return value;

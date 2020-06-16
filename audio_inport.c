@@ -16,6 +16,7 @@ See the License for the specific language governing permissions and
 
 #include <esp_log.h>
 #include "demiurge.h"
+#include "clipping.h"
 #include "audio_inport.h"
 
 
@@ -23,6 +24,7 @@ void audio_inport_init(audio_inport_t *handle, int position) {
    configASSERT(position > 0 && position <= 4)
    handle->me.read_fn = audio_inport_read;
    handle->me.data = handle;
+   handle->me.post_fn = clip_audio;
    handle->position = position;
 }
 
@@ -30,7 +32,7 @@ float IRAM_ATTR audio_inport_read(signal_t *handle, uint64_t time) {
    audio_inport_t *port = (audio_inport_t *) handle->data;
    if (time > handle->last_calc) {
       handle->last_calc = time;
-      float result = demiurge_input(port->position);
+      float result = handle->post_fn(demiurge_input(port->position));
       handle->cached = result;
       return result;
    }

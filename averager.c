@@ -18,11 +18,13 @@ See the License for the specific language governing permissions and
 #include <esp_log.h>
 #include "averager.h"
 #include "signal.h"
+#include "clipping.h"
 
 
 void averager_init(averager_t *handle) {
    handle->me.read_fn = averager_read;
    handle->me.data = handle;
+   handle->me.post_fn = clip_none;
    handle->update = 0.1;
    handle->keep = 0.9;
    handle->averaging_control = NULL;
@@ -52,7 +54,7 @@ float IRAM_ATTR averager_read(signal_t *handle, uint64_t time){
       float input = averager->input->read_fn(averager->input, time);
 
       float old_avg = averager->rolling_avg;
-      float  new_output;
+      float new_output;
 
       if (averager->averaging_control != NULL) {
          float keep = handle->read_fn(handle, time) / 20 + 10;
@@ -60,6 +62,7 @@ float IRAM_ATTR averager_read(signal_t *handle, uint64_t time){
       } else {
          new_output = old_avg * averager->keep + old_avg * averager->update;
       }
+      new_output = handle->post_fn(new_output);
       averager->rolling_avg = new_output;
       handle->cached = new_output;
       return new_output;

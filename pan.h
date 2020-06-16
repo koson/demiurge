@@ -28,12 +28,14 @@ typedef struct {
 
 typedef struct {
    signal_t me;
+   signal_t *input;
    panchannel_t left;
    panchannel_t right;
 } pan_t;
 
 void pan_init(pan_t *handle);
 void pan_configure_control(pan_t *handle, signal_t *control);
+float pan_read(signal_t *handle, uint64_t time);
 float panchannel_read(signal_t *handle, uint64_t time);
 
 

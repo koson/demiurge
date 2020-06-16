@@ -14,8 +14,6 @@ See the License for the specific language governing permissions and
       limitations under the License.
 */
 
-#include <freertos/FreeRTOS.h>
-#include <esp_log.h>
 #include "potentiometer.h"
 #include "demiurge.h"
 
@@ -24,6 +22,7 @@ void potentiometer_init(potentiometer_t *handle, int position) {
    configASSERT(position > 0 && position <= 4 )
    handle->me.read_fn = potentiometer_read;
    handle->me.data = handle;
+   handle->me.post_fn = clip_none;
    handle->position = position + DEMIURGE_POTENTIOMETER_OFFSET;
 }
 
@@ -31,7 +30,7 @@ float IRAM_ATTR potentiometer_read(signal_t *handle, uint64_t time) {
    if (time > handle->last_calc) {
       handle->last_calc = time;
       potentiometer_t *port = (potentiometer_t *) handle->data;
-      float result = demiurge_input(port->position);
+      float result = handle->post_fn(demiurge_input(port->position));
       handle->cached = result;
       return result;
    }

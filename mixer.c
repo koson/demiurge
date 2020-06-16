@@ -15,15 +15,16 @@ See the License for the specific language governing permissions and
 */
 
 #include <malloc.h>
-#include <esp_system.h>
-#include <esp_task.h>
-#include <esp_log.h>
+#include "clipping.h"
+#include "demi_asserts.h"
 #include "mixer.h"
+#include "signal.h"
 
 
 void mixer_init( mixer_t *handle, int channels) {
    handle->me.read_fn = mixer_read;
    handle->me.data = handle;
+   handle->me.post_fn = clip_none;
    handle->channels = channels;
    handle->inputs = (signal_t **) calloc(channels, sizeof(signal_t *));
    handle->volumes = (volume_t **) calloc(channels, sizeof(volume_t *));
@@ -56,7 +57,7 @@ float IRAM_ATTR mixer_read(signal_t *handle, uint64_t time) {
             counter++;
          }
       }
-      output = output / counter;
+      output = handle->post_fn(output / counter);
       handle->cached = output;
       return output;
    }

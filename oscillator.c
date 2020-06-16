@@ -14,10 +14,7 @@ See the License for the specific language governing permissions and
       limitations under the License.
 */
 
-#include <freertos/FreeRTOS.h>
-#include <math.h>
-#include <esp_task.h>
-#include <esp_log.h>
+#include "demi_asserts.h"
 #include "oscillator.h"
 #include "octave_per_volt.h"
 
@@ -125,6 +122,7 @@ float IRAM_ATTR oscillator_read(signal_t *handle, uint64_t time_in_us) {
             break;
          }
       }
+      out = handle->post_fn(out);
       handle->extra1 = out;
       handle->cached = out;
       return out;

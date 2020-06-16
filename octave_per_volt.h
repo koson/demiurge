@@ -19,10 +19,30 @@ See the License for the specific language governing permissions and
 
 #include <math.h>
 
-#define TWO_POWER_OF_2_75 6.7271713
+typedef struct {
+   union {
+      struct {
+         uint32_t mantissa: 23;
+         uint32_t exp: 8;
+         uint32_t sign: 1;
+      };
+      uint32_t intval;
+      float fval;
+   };
+} float_raw;
 
 float octave_frequencyOf(float voltage);
 
 float octave_voltageOf(float frequency);
+
+inline float pow2(float voltage) {
+// This should be faster than the pow() function, i.e.
+//   return pow(2, voltage);
+   float_raw f;
+   f.fval = voltage;
+   f.exp++;
+   return f.fval;
+}
+
 
 #endif

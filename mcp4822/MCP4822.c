@@ -114,8 +114,9 @@ void IRAM_ATTR mcp4822_set(mcp4822_t *dac, int16_t out1, int16_t out2) {
    channel_b = out2 & 0xFFF;
    dac->spiHw->data_buf[0] = ((MCP4822_CHANNEL_A | MCP4822_ACTIVE | MCP4822_GAIN | channel_a) << 16);
    dac->spiHw->cmd.usr = 1;
-   uint64_t start = demiurge_current_time();
-   while( start == demiurge_current_time());
+   uint32_t a;
+   for(int i=0; i < 40; i++)
+      a = dac->spiHw->rd_status.val;
    dac->spiHw->data_buf[0] = ((MCP4822_CHANNEL_B | MCP4822_ACTIVE | MCP4822_GAIN | channel_b) << 16);
    dac->spiHw->cmd.usr = 1;
 }

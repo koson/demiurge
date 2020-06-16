@@ -17,8 +17,9 @@ See the License for the specific language governing permissions and
 #ifndef _DEMIURGE_SIGNAL_H_
 #define _DEMIURGE_SIGNAL_H_
 
-
+#include <stddef.h>
 #include <stdint.h>
+#include <esp_attr.h>
 
 // All signals uses float for representation.
 // Audio = -10.0 to 10.0
@@ -26,6 +27,7 @@ See the License for the specific language governing permissions and
 // Gate = 0V or >=1V
 typedef struct signal_struct signal_t;
 
+typedef float (*post_fn)(float);
 typedef float (*signal_fn)(signal_t *, uint64_t);
 
 typedef struct signal_struct {
@@ -39,6 +41,7 @@ typedef struct signal_struct {
    float extra7;
    float extra8;
    signal_fn read_fn;
+   post_fn post_fn;
    uint64_t last_calc;
    float cached;
 } signal_t;

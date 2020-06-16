@@ -19,15 +19,20 @@ See the License for the specific language governing permissions and
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "signal.h"
+#include <esp_attr.h>
 
-#include "demiurge.h"
+// Demiurge Core
+#include "signal.h"
+#include "demi_asserts.h"
+#include "clipping.h"
+#include "octave_per_volt.h"
+
+// Demiurge Processing Blocks
 #include "adsr.h"
 #include "audio_inport.h"
 #include "audio_outport.h"
 #include "averager.h"
 #include "calculator.h"
-#include "clipping.h"
 #include "control_pair.h"
 #include "cv_inport.h"
 #include "cv_outport.h"
@@ -41,7 +46,6 @@ See the License for the specific language governing permissions and
 #include "lg10.h"
 #include "mixer.h"
 #include "scale.h"
-#include "octave_per_volt.h"
 #include "offset.h"
 #include "oscillator.h"
 #include "pan.h"
@@ -51,13 +55,9 @@ See the License for the specific language governing permissions and
 #include "threshold.h"
 #include "volume.h"
 
+#ifndef DEMIURGE_MAX_SINKS
 #define DEMIURGE_MAX_SINKS 6
-
-#define configASSERT(a) if (unlikely(!(a))) {                                     \
-        ets_printf("%s:%d (%s)- assert failed!\n", __FILE__, __LINE__,  \
-                   __FUNCTION__);                                       \
-        abort();                                                        \
-        }
+#endif
 
 uint64_t demiurge_current_time();
 

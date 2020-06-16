@@ -17,11 +17,13 @@ See the License for the specific language governing permissions and
 #ifndef DEMIURGE_CLIPPING_H
 #define DEMIURGE_CLIPPING_H
 
-float clipGate(float value);
+float clip_none(float);
 
-float clipCV(float value);
+float clip_gate(float value);
 
-float clipAudio(float value);
+float clip_cv(float value);
+
+float clip_audio(float value);
 
 
 #endif //DEMIURGE_CLIPPING_H
