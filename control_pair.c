@@ -35,23 +35,12 @@ float IRAM_ATTR control_pair_read(signal_t *handle, uint64_t time) {
       handle->last_calc = time;
 
       signal_t *pot = &control->potentiometer.me;
-      float pot_in;
       float pot_scale = control->potentiometer_scale;
-      if (pot_scale == 1.0) {
-         pot_in = pot->read_fn(pot, time);
-      } else {
-         pot_in = pot->read_fn(pot, time) * pot_scale;
-      }
+      float pot_in = pot->read_fn(pot, time) * pot_scale;
 
       signal_t *cv = &control->cv.me;
-      float cv_in;
       float cv_scale = control->cv_scale;
-      if (cv_scale == 1.0) {
-         cv_in = cv->read_fn(cv, time);
-      } else {
-         cv_in = cv->read_fn(cv, time) * cv_scale;
-      }
-
+      float cv_in = cv->read_fn(cv, time) * cv_scale;
       float result = handle->post_fn((pot_in + cv_in) / 2);
       handle->cached = result;
       return result;

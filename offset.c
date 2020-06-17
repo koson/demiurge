@@ -45,14 +45,21 @@ float IRAM_ATTR offset_read(signal_t *handle, uint64_t time){
    if (time > handle->last_calc) {
       handle->last_calc = time;
       offset_t *offset = (offset_t *) handle->data;
-      float input = offset->input->read_fn(offset->input, time);
-      float  new_output;
 
+      signal_t *input = offset->input;
+      float input_value = input->read_fn(input, time);
+
+      float  new_output;
       if (offset->offset_control != NULL) {
-         float new_offset = handle->read_fn(handle, time);
-         new_output = handle->post_fn(input + new_offset);
+         signal_t *ctrl = offset->input;
+         float new_offset = ctrl->read_fn(ctrl, time);
+#ifdef DEMIURGE_DEV
+         handle->extra1 = input_value;
+         handle->extra2 = new_offset;
+#endif
+         new_output = handle->post_fn(input_value + new_offset);
       } else {
-         new_output = handle->post_fn(input + offset->offset);
+         new_output = handle->post_fn(input_value + offset->offset);
       }
       handle->cached = new_output;
       return new_output;

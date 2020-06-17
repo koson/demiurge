@@ -29,8 +29,8 @@ void audio_outport_init(audio_outport_t *handle, int position) {
 }
 
 void audio_outport_configure_input(audio_outport_t *handle, signal_t *input) {
-   handle->input = input;
    if (!handle->registered) {
+      handle->input = input;
       demiurge_registerSink(&handle->me);
       handle->registered = true;
    }
@@ -44,8 +44,10 @@ float IRAM_ATTR audio_outport_read(signal_t *handle, uint64_t time) {
       signal_fn fn = upstream->read_fn;
       float raw = fn(upstream, time);
       float result = handle->post_fn(raw);
+#ifdef DEMIURGE_DEV
       handle->extra1 = raw;
       handle->extra2 = result;
+#endif
       demiurge_set_output(port->position, result);
       return 0.0;
    }

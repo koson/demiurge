@@ -64,7 +64,7 @@ static void initialize_time() {
    TIMERG0.hw_timer[1].config.enable = 1;
 }
 
-uint64_t demiurge_current_time() {
+uint64_t IRAM_ATTR demiurge_current_time() {
    TIMERG0.hw_timer[1].update = 1;
    uint64_t lo = TIMERG0.hw_timer[1].cnt_low;
    uint64_t hi = TIMERG0.hw_timer[1].cnt_high;
@@ -96,7 +96,7 @@ static void IRAM_ATTR wait_timer_alarm() {
    while (TIMERG0.hw_timer[0].config.alarm_en) {
       counter++;
    }
-   if (counter == 0)
+   if (counter < 2)
       overrun++;
    TIMERG0.hw_timer[0].config.alarm_en = 1;
 }
@@ -140,11 +140,10 @@ void IRAM_ATTR demiurge_set_output(int number, float value) {
 }
 
 void IRAM_ATTR demiurge_print_overview(const char *tag, signal_t *signal) {
-#ifndef CONFIG_ESP_CONSOLE_UART_NONE
 #ifdef DEMIURGE_TICK_TIMING
    ESP_LOGI("TICK", "interval=%lld, duration=%lld, start=%lld, overrun=%d",
             tick_interval, tick_duration, tick_start, overrun);
-#endif
+#endif  //DEMIURGE_TICK_TIMING
    ESP_LOGI(tag, "Input: %2.1f, %2.1f, %2.1f, %2.1f, %2.1f, %2.1f, %2.1f, %2.1f",
             demiurge_input(1),
             demiurge_input(2),
@@ -159,8 +158,10 @@ void IRAM_ATTR demiurge_print_overview(const char *tag, signal_t *signal) {
             demiurge_output(1),
             demiurge_output(2)
    );
-   ESP_LOGI(tag, "Extras: [%lld] - %2.1f, %2.1f, %2.1f, %2.1f, %2.1f, %2.1f, %2.1f, %2.1f, %2.1f",
+#ifdef DEMIURGE_DEV
+   ESP_LOGI(tag, "Extras: [%lld] : %2.1f - %2.1f, %2.1f, %2.1f, %2.1f, %2.1f, %2.1f, %2.1f, %2.1f",
             signal->last_calc,
+            signal->cached,
             signal->extra1,
             signal->extra2,
             signal->extra3,
@@ -168,11 +169,9 @@ void IRAM_ATTR demiurge_print_overview(const char *tag, signal_t *signal) {
             signal->extra5,
             signal->extra6,
             signal->extra7,
-            signal->extra8,
-            signal->cached
-
+            signal->extra8
    );
-#endif
+#endif // DEMIURGE_DEV
 }
 
 float IRAM_ATTR demiurge_input(int number) {

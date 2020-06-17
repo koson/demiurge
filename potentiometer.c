@@ -24,13 +24,19 @@ void potentiometer_init(potentiometer_t *handle, int position) {
    handle->me.data = handle;
    handle->me.post_fn = clip_none;
    handle->position = position + DEMIURGE_POTENTIOMETER_OFFSET;
+   handle->me.extra8 = handle->position;
 }
 
 float IRAM_ATTR potentiometer_read(signal_t *handle, uint64_t time) {
    if (time > handle->last_calc) {
       handle->last_calc = time;
-      potentiometer_t *port = (potentiometer_t *) handle->data;
-      float result = handle->post_fn(demiurge_input(port->position));
+      potentiometer_t *pot = (potentiometer_t *) handle->data;
+      float in = demiurge_input(pot->position);
+#ifdef DEMIURGE_DEV
+      handle->extra1 = in;
+      handle->extra2 = pot->position;
+#endif
+      float result = handle->post_fn(in);
       handle->cached = result;
       return result;
    }

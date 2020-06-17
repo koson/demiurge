@@ -17,10 +17,6 @@ See the License for the specific language governing permissions and
 #ifndef _DEMIURGE_DEMIURGE_H_
 #define _DEMIURGE_DEMIURGE_H_
 
-#include <stdint.h>
-#include <stdbool.h>
-#include <esp_attr.h>
-
 // Demiurge Core
 #include "signal.h"
 #include "demi_asserts.h"

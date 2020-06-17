@@ -31,18 +31,11 @@ typedef struct {
    };
 } float_raw;
 
-float octave_frequencyOf(float voltage);
+float octave_frequency_of(float voltage);
 
-float octave_voltageOf(float frequency);
+float octave_voltage_of(float frequency);
 
-inline float pow2(float voltage) {
-// This should be faster than the pow() function, i.e.
-//   return pow(2, voltage);
-   float_raw f;
-   f.fval = voltage;
-   f.exp++;
-   return f.fval;
+inline IRAM_ATTR float pow2(float voltage) {
+   return pow(2, voltage);
 }
-
-
 #endif

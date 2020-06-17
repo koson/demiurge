@@ -21,7 +21,9 @@ void fixed_signal_init(fixed_signal_t *handle, float value) {
    handle->me.read_fn = fixed_signal_read;
    handle->me.data = handle;
    handle->me.post_fn = clip_none;
+#ifdef DEMIURGE_DEV
    handle->me.extra1 = value;
+#endif
 }
 
 float IRAM_ATTR fixed_signal_read(signal_t *handle, uint64_t time) {

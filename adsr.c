@@ -72,8 +72,10 @@ float IRAM_ATTR adsr_read(signal_t *handle, uint64_t time) {
 
       bool trigIn = threshold_compute(&adsr->trigThreshold, adsr->trig->read_fn(adsr->trig, time));
       bool gateIn = threshold_compute(&adsr->gateThreshold, adsr->gate->read_fn(adsr->gate, time));
+#ifdef DEMIURGE_DEV
       handle->extra1 = trigIn;
       handle->extra2 = gateIn;
+#endif
       if (!adsr->currentTrig && trigIn) {
          // RISE
          adsr->stateMachine = 1;
@@ -132,7 +134,9 @@ float IRAM_ATTR adsr_read(signal_t *handle, uint64_t time) {
 
       output = handle->post_fn(output);
       handle->cached = output;
+#ifdef DEMIURGE_DEV
       handle->extra4 = adsr->stateMachine;
+#endif
       return output;
    }
    return handle->cached;

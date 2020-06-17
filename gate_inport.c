@@ -29,7 +29,9 @@ float IRAM_ATTR gate_inport_read(signal_t *handle, uint64_t time){
    if( time > handle->last_calc ) {
       handle->last_calc = time;
       gate_inport_t *port = (gate_inport_t *) handle->data;
+#ifdef DEMIURGE_DEV
       handle->extra1 = port->position+1;
+#endif
       // if position == 0, then use digital input, otherwise use analog inputs.
       float result;
       if( port->position ) {
@@ -40,7 +42,9 @@ float IRAM_ATTR gate_inport_read(signal_t *handle, uint64_t time){
          bool state = demiurge_gpio(32);
          result = state ? DEMIURGE_GATE_HIGH : DEMIURGE_GATE_LOW;
       }
+#ifdef DEMIURGE_DEV
       handle->extra2 = result;
+#endif
       handle->cached = result;
    }
    return handle->cached;

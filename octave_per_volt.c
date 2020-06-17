@@ -20,11 +20,15 @@ See the License for the specific language governing permissions and
 #include <esp_task.h>
 #include "octave_per_volt.h"
 
-float IRAM_ATTR octave_frequencyOf(float voltage) {
+float IRAM_ATTR octave_frequency_of(float voltage) {
    // TODO: power of 2 can be optimized on 'float' by adding 1 to exponent.
+   if( voltage > 10 || voltage < -10 )
+   {
+      return 400;
+   }
    return 27.5 * pow2(voltage);
 }
 
-float IRAM_ATTR octave_voltageOf(float frequency) {
+float IRAM_ATTR octave_voltage_of(float frequency) {
    return log2f(frequency / 27.5);
 }

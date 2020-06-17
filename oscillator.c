@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
       limitations under the License.
 */
 
+#include "clipping.h"
 #include "demi_asserts.h"
 #include "oscillator.h"
 #include "octave_per_volt.h"
@@ -32,6 +33,7 @@ void oscillator_init(oscillator_t *handle, int mode) {
    }
    handle->me.read_fn = oscillator_read;
    handle->me.data = handle;
+   handle->me.post_fn = clip_none;
    handle->mode = mode;
    handle->frequency = NULL;
    handle->amplitude = NULL;
@@ -65,12 +67,16 @@ void oscillator_configure_trig(oscillator_t *handle, signal_t *control) {
 static uint32_t IRAM_ATTR period(const oscillator_t *osc, signal_t *handle, uint64_t time_in_us) {
    signal_t *freqControl = osc->frequency;
    float freq = 440;
-   if (freqControl != NULL) {
+   if (freqControl) {
       float voltage = freqControl->read_fn(freqControl, time_in_us);
-      freq = octave_frequencyOf(voltage);
+      freq = octave_frequency_of(voltage);
+#ifdef DEMIURGE_DEV
       handle->extra2 = voltage;
-      handle->extra3 = freq;
    }
+   handle->extra3 = freq;
+#else
+   }
+#endif
    uint32_t period_in_us = 1000000 / freq;
    return period_in_us;
 }
@@ -103,7 +109,9 @@ float IRAM_ATTR oscillator_read(signal_t *handle, uint64_t time_in_us) {
             uint16_t index = SINEWAVE_SAMPLES * percentage_of_cycle;
             float gain = scale(osc, time_in_us);
             out = sine_wave[index] * gain;
+#ifdef DEMIURGE_DEV
             handle->extra4 = gain;
+#endif
             break;
          }
          case DEMIURGE_SQUARE: {
@@ -123,7 +131,9 @@ float IRAM_ATTR oscillator_read(signal_t *handle, uint64_t time_in_us) {
          }
       }
       out = handle->post_fn(out);
+#ifdef DEMIURGE_DEV
       handle->extra1 = out;
+#endif
       handle->cached = out;
       return out;
    }

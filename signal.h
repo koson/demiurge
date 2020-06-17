@@ -19,20 +19,29 @@ See the License for the specific language governing permissions and
 
 #include <stddef.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <esp_attr.h>
 
 // All signals uses float for representation.
 // Audio = -10.0 to 10.0
 // CV = -5.0 to 5.0
 // Gate = 0V or >=1V
-typedef struct signal_struct signal_t;
+volatile typedef struct signal_struct signal_t;
 
-typedef float (*post_fn)(float);
+typedef float (*float_fn)(float);
 typedef float (*signal_fn)(signal_t *, uint64_t);
 
-typedef struct signal_struct {
+volatile typedef struct signal_struct {
    void *data;
-   float extra1;
+   signal_fn read_fn;
+   float_fn post_fn;
+   uint64_t last_calc;
+   float cached;
+
+   // extraN are debugging variables, used by the demiurge_print_overview and only reasonable
+   // way for a block to communicate with the user.
+   float extra1;        // also used in fixed_signal
+#ifdef DEMIURGE_DEV
    float extra2;
    float extra3;
    float extra4;
@@ -40,10 +49,7 @@ typedef struct signal_struct {
    float extra6;
    float extra7;
    float extra8;
-   signal_fn read_fn;
-   post_fn post_fn;
-   uint64_t last_calc;
-   float cached;
+#endif
 } signal_t;
 
 #endif
