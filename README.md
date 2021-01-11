@@ -1,4 +1,4 @@
 # demiurge
 Demiurge Sound Platform - source files
 
-THIS REPOSITORY IS OBSOLETE. See [demiurge-stm]
+THIS REPOSITORY IS OBSOLETE. See [demiurge-stm](https://github.com/AwesomeAudioApparatus/demiurge-stm)
